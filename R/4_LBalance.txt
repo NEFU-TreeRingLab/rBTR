@@ -1,0 +1,20 @@
+
+#' Light balance
+#'0.3
+#' @param clim.today Today climate data
+#' @param dynparam.growth.t Dynamic parameters
+#' @param fixparam.light Fix parameters
+#'
+#' @return L_b factor
+
+L_balance <- function(clim.today, dynparam.growth.t ,fixparam.light ){  ## C_balance start  , CNL, VNL
+
+  dynparam.growth.t$L_i.fiber  = fixparam.light$a.fiber * exp(
+    -exp(fixparam.light$b.fiber - fixparam.light$c.fiber * clim.today$dL_i ))
+
+  dynparam.growth.t$L_i.vessel = fixparam.light$a.vessel * exp(
+    -exp(fixparam.light$b.vessel - fixparam.light$c.vessel * clim.today$dL_i ))
+
+  return(dynparam.growth.t)
+
+}  ## c_balance end ---------------

@@ -1,0 +1,28 @@
+Package: rBTR
+Title: A process-based model of xylogenesis and tree-ring formation of broad-leaved trees (BTR) driven by climate
+Version: 0.1.5
+Authors@R: 
+    c(person(given ="Binqing", 
+             family = "Zhao",
+             role = c("aut", "cre"),  
+             email = "binqing_zhao@163.com") ,
+      person(given ="Xiaochun", 
+             family = "Wang",
+             role = c("aut", "ths"),  
+             email = "wangx@nefu.edu.cn"))
+Description: A new process-based model of xylem formation and ring growth, which provides a new tool for exploring the climate response of xylem and radial growth of broad-leaved trees.
+License: GPL (>= 2)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    data.table,
+    dplyr,
+    magrittr,
+    openxlsx,
+    tibble,
+    tidyr,
+    utils
+Depends:
+    R (>= 3.5.0)    
+LazyData: true
