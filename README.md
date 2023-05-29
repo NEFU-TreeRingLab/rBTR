@@ -1,18 +1,18 @@
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# TreeXylogenesis
+# rBTR
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
-The goal of TreeXylogenesis is to …
+The goal of Broad-leaved trees model (BTR model) is to …
 
 ## Installation
 
-You can install the development version of TreeXylogenesis like so:
+You can install the development version of BTR model like so:
 
-``` r
+```r
 # FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
 ```
 
@@ -20,15 +20,15 @@ You can install the development version of TreeXylogenesis like so:
 
 This is a basic example which shows you how to solve a common problem:
 
-``` r
-library(TreeXylogenesis)
+```r
+library(rBTR)
 ## basic example code
 ```
 
 What is special about using `README.Rmd` instead of just `README.md`?
 You can include R chunks like so:
 
-``` r
+```r
 summary(cars)
 #>      speed           dist       
 #>  Min.   : 4.0   Min.   :  2.00  
