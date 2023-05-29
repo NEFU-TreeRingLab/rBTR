@@ -145,7 +145,7 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
   dL_i <- c( 0 , diff( mclim$Ls ) )
 
-  Microclim <- cbind( mclim , dL_i )
+  Microclim <- cbind( mclim , dL_i*12 )
 
   Microclim <- dplyr::mutate(Microclim,VPD = 0.61078*exp(17.27*TEM/(TEM+237.3))*(1-RH))
 
