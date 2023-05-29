@@ -6,11 +6,11 @@
 
 <!-- badges: end -->
 
-<<<<<<< HEAD
+
 **Rpackage for the BTR model is still under development.**
 
-=======
->>>>>>> e7f0b52f9a55f92325d60c21026daefb40998978
+
+
 The goal of Broad-leaved trees model (BTR model) is to …
 
 ## Installation
