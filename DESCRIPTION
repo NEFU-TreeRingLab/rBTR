@@ -26,3 +26,5 @@ Imports:
 Depends:
     R (>= 3.5.0)    
 LazyData: true
+URL: http://github.com/kdoodk/rBTR
+BugReports: http://github.com/kdoodk/rBTR/issues
