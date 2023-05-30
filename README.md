@@ -8,9 +8,13 @@
 
 **Rpackage for the BTR model is still under development.**
 
+We expect an update of the example section of the readme file by June 2nd.
 
 
-The goal of Broad-leaved trees model (BTR model) is to …
+
+rBTR is an Rpackage of the Broadleaved Tree-Ring (BTR) model. 
+
+
 
 ## Installation
 
@@ -55,5 +59,3 @@ You can also embed plots, for example:
 
 In that case, don’t forget to commit and push the resulting figure
 files, so they display on GitHub and CRAN.
-
-
