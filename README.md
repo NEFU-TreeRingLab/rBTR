@@ -6,7 +6,6 @@
 
 <!-- badges: end -->
 
-
 **Rpackage for the BTR model is still under development.**
 
 
@@ -18,7 +17,7 @@ The goal of Broad-leaved trees model (BTR model) is to …
 You can install the development version of BTR model like so:
 
 ```r
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
+# devtools::install_github("kdoodk/rBTR")
 ```
 
 ## Example
@@ -56,3 +55,5 @@ You can also embed plots, for example:
 
 In that case, don’t forget to commit and push the resulting figure
 files, so they display on GitHub and CRAN.
+
+

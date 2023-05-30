@@ -20,13 +20,13 @@ cell_division <- function( clim.today, fixparam.divi,fixparam.growth.fiber,fixpa
   wgR <- clim.today$gE* min( clim.today$gT, clim.today$gM)          ## fiber  growth rate
 
   ## error catch
-  # dynparam.growth.t$grwothSeason[egR <= 0.1 ] <- 1 ## & clim.today$DOY > 200
-  egR[dynparam.growth.t$grwothSeason < 2 ] <- 0.001 ## 生长季快结束时细胞不扩大
+  dynparam.growth.t$grwothSeason[egR <= 0.05 & clim.today$DOY > 200 ] <- 1 ##
+  egR[dynparam.growth.t$grwothSeason == 1 ] <- 0.001 ## 生长季快结束时细胞不扩大
 
   ## growth velocity
   dynparam.growth.t$v_c.fiber  =  fixparam.divi$va_c.fiber * egR # ( wgR^(1 + dynparam.growth.t$L_just) )
 
-  dynparam.growth.t$v_w.fiber   =  fixparam.divi$va_w.fiber * wgR *(1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
+  dynparam.growth.t$v_w.fiber   = fixparam.divi$va_w.fiber * wgR *(1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
 
   dynparam.growth.t$v_l.fiber  =  fixparam.divi$va_l.fiber * wgR *(1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
 
@@ -42,26 +42,22 @@ cell_division <- function( clim.today, fixparam.divi,fixparam.growth.fiber,fixpa
 
   ### cambium grwoth from a bind model （）
   dynparam.growth.t$T_age = fixparam.divi$alpha_age *
-    exp(fixparam.divi$beta_age * dynparam.growth.t$Age) + fixparam.divi$p213
+    exp(fixparam.divi$beta_age * dynparam.growth.t$Age)
 
-  # dynparam.growth.t$czgR =  fixparam.divi$alpha_cz *
-  #   exp(fixparam.divi$beta_cz * ( egR * dynparam.growth.t$T_age )  ) ## old
   dynparam.growth.t$czgR =  fixparam.divi$alpha_cz *
     exp(fixparam.divi$beta_cz * ( egR )  ) ## new
 
-
   dynparam.growth.t$czgR[ dynparam.growth.t$czgR > egR ] <- egR ## error catch
 
+  # CCMAX <- ( Fixp_divi$DCC  +  Dynp_growth$GR_age   )   *Dynp_growth$GR_cz   ##  * GRT
 
-  # v_cz <- fixparam.divi$va_cz * dynparam.growth.t$czgR ##  * wgR ## old
-  v_cz <- fixparam.divi$va_cz * dynparam.growth.t$czgR * dynparam.growth.t$T_age ## new
+  v_cz <- ( fixparam.divi$va_cz + dynparam.growth.t$T_age )* dynparam.growth.t$czgR  ## new
 
   dynparam.growth.t$egR = egR ## check 以后修改
 
-  v_cz[dynparam.growth.t$grwothSeason < 2 ] <- 0 ## error catch 非生长季不生长
+  v_cz[dynparam.growth.t$grwothSeason == 1 ] <- 0 ## error catch 非生长季不生长
 
   dynparam.growth.t$dCA_cz[dynparam.growth.t$dCA_cz == 0 ] <- cells$CA
-
 
   dynparam.growth.t$Vcz <- v_cz
 
@@ -95,7 +91,7 @@ cell_division <- function( clim.today, fixparam.divi,fixparam.growth.fiber,fixpa
 
       Ct = dplyr::bind_rows(Ct , cells)
 
-      if (dynparam.growth.t$SumV == 0 & dynparam.growth.t$Vvcmax != 0 ) {
+      if (dynparam.growth.t$SumV == 0 & dynparam.growth.t$v_c.vessel != 0 ) {
         Nv = 1
       }else{
         ## P_VG <- deltaD*TVA*dynparam.growth.t$SumV/dynparam.growth.t$Vvlmax/TA

@@ -4,7 +4,7 @@
 \alias{btr}
 \title{Main function calculate tree-ring anatomic}
 \usage{
-btr(clim, parameters, syear = NA, eyear = NA, intraannual = T)
+btr(clim, parameters, syear = NA, eyear = NA, intraannual = F)
 }
 \arguments{
 \item{clim}{climate data must have Year，DOY，Temp ，Prec}

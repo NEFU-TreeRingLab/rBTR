@@ -143,9 +143,9 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
   # detach(fixparam.Mclim)
 
-  dL_i <- c( 0 , diff( mclim$Ls ) )
+  dL_i <- c( 0 , diff( mclim$Ls ) ) *12
 
-  Microclim <- cbind( mclim , dL_i*12 )
+  Microclim <- cbind( mclim , dL_i )
 
   Microclim <- dplyr::mutate(Microclim,VPD = 0.61078*exp(17.27*TEM/(TEM+237.3))*(1-RH))
 
@@ -234,7 +234,7 @@ compute_daylengthfactor <-function( fixparam.Mclim, dynparam.Mclim ){  ## daylen
 
 Compute_gE <- function(climdata, fixparam.Mclim, dynparam.Mclim, syear,eyear ){  ## gE start
 
-  basedata  <-  Compute_daylengthfactor( fixparam.Mclim, dynparam.Mclim ) %>% data.frame() %>% tibble::rownames_to_column("DOY")
+  basedata  <-  compute_daylengthfactor( fixparam.Mclim, dynparam.Mclim ) %>% data.frame() %>% tibble::rownames_to_column("DOY")
   basedata$DOY <- as.numeric(basedata$DOY )
   d365  <-  basedata[,c(1,2,4)] %>% dplyr::rename(gE = `gE365`, Ls = `L365`)
   d366  <-  basedata[,c(1,3,5)] %>% dplyr::rename(gE = `gE366`, Ls = `L366`)
@@ -303,6 +303,8 @@ Compute_rootd  <-  function(climdata, fixparam.Mclim, dynparam.Mclim ){
     }
 
   }
+
+  dep[1] <- dep[2] ## error catch
 
   rootd  <-  round(dep)
   return(rootd)

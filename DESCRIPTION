@@ -1,6 +1,6 @@
 Package: rBTR
 Title: A process-based model of xylogenesis and tree-ring formation of broad-leaved trees (BTR) driven by climate
-Version: 0.1.5
+Version: 0.1.52
 Authors@R: 
     c(person(given ="Binqing", 
              family = "Zhao",

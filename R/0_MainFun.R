@@ -24,7 +24,7 @@
 #' @export
 #'
 
-btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = T){ ## functions start  ring_width,
+btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = F){ ## functions start  ring_width,
 
   redir <- paste0("res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
 
@@ -280,10 +280,11 @@ btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = T){ ##
 
   annaulRing <-
     summaryYears %>% filter(Year >= syear) %>% group_by(Year) %>%summarise(
-    CellLayer = max(cell_L),
-    CellNumber = mean( parameters$values[ parameters$parameter == "width"]  / CTD * CellLayer ) + max(VNoV) ,
-    RingWidth = (mean( parameters$values[ parameters$parameter == "width"] / CTD ) *
-             sum(CA) + sum(VCA,na.rm = T)) /
+    CellLayer = max(cell_L,na.rm = T),
+    CellNumber = mean( parameters$values[ parameters$parameter == "width"]  / CTD * CellLayer ,na.rm = T) +
+      max(VNoV,na.rm = T) ,
+    RingWidth = (mean( parameters$values[ parameters$parameter == "width"] / CTD ,na.rm = T) *
+             sum(CA,na.rm = T) + sum(VCA,na.rm = T)) /
              parameters$values[ parameters$parameter == "width"] / 1000
 
   )

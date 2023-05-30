@@ -63,10 +63,10 @@ Compute_gR <- function( clim , growth_Param){
   ## L_i.fiber , gL_vessel
 
   clim$L_i.fiber  = growthParam$a.fiber * exp(
-    -exp(growthParam$b.fiber - growthParam$c.fiber * clim.today$dL_i ) )
+    -exp(  growthParam$b.fiber - growthParam$c.fiber * clim$dL_i ) )
 
   clim$L_i.vessel = growthParam$a.vessel * exp(
-    -exp(growthParam$b.vessel - growthParam$c.vessel * clim.today$dL_i ) )
+    -exp(  growthParam$b.vessel - growthParam$c.vessel * clim$dL_i ) )
 
 
 
