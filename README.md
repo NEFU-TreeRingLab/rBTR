@@ -8,9 +8,6 @@
 
 **Rpackage for the BTR model is still under development.**
 
-We expect an update of the example section of the readme file by June 8th.
-
-
 
 rBTR is an Rpackage of the Broadleaved Tree-Ring (BTR) model. 
 
