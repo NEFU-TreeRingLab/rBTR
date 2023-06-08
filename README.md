@@ -66,11 +66,11 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Example climate data input.
    Use `data(LS_clim)` view sample climate data.
     
-   ![readme_df_readme_df_clim1.png](./man/Figs/readme_df_readme_df_clim1.png)
+   ![readme_df_clim1.png](./man/Figs/readme_df_clim1.png)
 
    If you have more reliable soil moisture or VPD data for the sample site, `Computer_clim()` will only calculate the missing parts.
    Use `data(LS_climdata)` view sample climate data.
 
 
-   ![ readme_df_readme_df_clim2.png ](man/Figs/readme_df_readme_df_clim2.png)
+   ![ readme_df_clim2.png ](man/Figs/readme_df_clim2.png)
 
