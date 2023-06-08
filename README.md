@@ -28,34 +28,42 @@ You can install the development version of BTR model like so:
 
 This is a basic example which shows you how to solve a common problem:
 
+#### Simulation
+
 ```r
 library(rBTR)
-## basic example code
+
+## computer daylength, soil moisture and VPD
+Climate_data <- Compute_clim( climdata = LS_clim , parameters = Clim_param , syear = NA, eyear = NA )
+# or
+Climate_data <- Compute_clim( climdata = LS_climdata , parameters = Clim_param , syear = NA, eyear = NA )
+
+## Simulate tree growth
+Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, intraannual = F)
+
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+#### Required data frame organization
 
-```r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
+1. ###### Gorwth parameters list
+   
+   Example growth parameters list. Key cols are required columns in the data frame, they  are called in the BTR model.
+   Use `data(BP_param)` or` data(FM_param)` view sample parameter data frame.
+   <img src = "man/FIgs/readme_df_Gparam.png" , width = "80%" / >
 
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date. `devtools::build_readme()` is handy for this. You could also
-use GitHub Actions to re-render `README.Rmd` every time you push. An
-example workflow can be found here:
-<https://github.com/r-lib/actions/tree/v1/examples>.
+###### 2.Climate parameters list
 
-You can also embed plots, for example:
+   Example climate parameters list. 
+   Use `data(clim_param)` view sample parameter data frame.
+   If you only want to calculate the day length, set the parameter ***latitude***. The remaining parameters are used to           calculate soil moisture using the **cpc-leaky bucket** model.
+   <img src = "man/FIgs/readme_df_Cparam.png" , width = "80%" / >
 
-<img src="man/figures/README-pressure-1.png" width="100%" />
+3.###### Climate data
+    `Computer_clim()`'function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***, ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, and ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.
+    Example climate data input.
+    Use `data(LS_clim)` view sample climate data.
+    <img src = "man/FIgs/readme_df_readme_df_clim1.png" , width = "80%" / >
 
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub and CRAN.
+   If you have more reliable soil moisture or VPD data for the sample site, `Computer_clim()` will only calculate the missing parts.
+   Use `data(LS_climdata)` view sample climate data.
+   <img src = "man/FIgs/readme_df_readme_df_clim2.png" , width = "80%" / >
