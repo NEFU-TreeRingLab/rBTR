@@ -50,9 +50,8 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Example growth parameters list. Key cols are required columns in the data frame, they  are called in the BTR model.
    Use `data(BP_param)` or` data(FM_param)` view sample parameter data frame.
    
-   ![GPdf](man/FIgs/readme_df_Gparam.png)
+   ![GPdf](./man/FIgs/readme_df_Gparam.png)
 
-   ![GPdf](man/FIgs/readme_df_Gparam2.tif)
 
 2. ###### Climate parameters list
 
@@ -60,19 +59,18 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Use `data(clim_param)` view sample parameter data frame.
    If you only want to calculate the day length, set the parameter ***latitude***. The remaining parameters are used to           calculate soil moisture using the **cpc-leaky bucket** model.
 
-   <img src = "man/FIgs/readme_df_Cparam.png" , width = "80%" / >
-   ![](man/FIgs/readme_df_Cparam.png)
+   ![Cpdf](./man/FIgs/readme_df_Cparam.png)
 
 3. ###### Climate data
    `Computer_clim()`'function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***, ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, and ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.
    Example climate data input.
    Use `data(LS_clim)` view sample climate data.
     
-   <img src = "man/FIgs/readme_df_readme_df_clim1.png" , width = "80%" / >
-   ![](man/FIgs/readme_df_readme_df_clim1.png)
+   ![cl1](./man/FIgs/readme_df_readme_df_clim1.png)
 
    If you have more reliable soil moisture or VPD data for the sample site, `Computer_clim()` will only calculate the missing parts.
    Use `data(LS_climdata)` view sample climate data.
 
-   <img src = "man/FIgs/readme_df_readme_df_clim2.png" , width = "80%" / >
-   ![](man/FIgs/readme_df_readme_df_clim2.png)
+   <img src = "man/Figs/readme_df_readme_df_clim2.png" , width = "80%" / >
+
+   ![cl2](man/FIgs/readme_df_readme_df_clim2.png)
