@@ -50,7 +50,7 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Example growth parameters list. Key cols are required columns in the data frame, they  are called in the BTR model.
    Use `data(BP_param)` or` data(FM_param)` view sample parameter data frame.
    
-   ![readme_df_Gparam.png](./man/FIgs/readme_df_Gparam.png)
+   ![readme_df_Gparam.png](./man/Figs/readme_df_Gparam.png)
 
 
 2. ###### Climate parameters list
@@ -59,7 +59,7 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Use `data(clim_param)` view sample parameter data frame.
    If you only want to calculate the day length, set the parameter ***latitude***. The remaining parameters are used to           calculate soil moisture using the **cpc-leaky bucket** model.
 
-   ![readme_df_Cparam](../man/FIgs/readme_df_Cparam.png)
+   ![readme_df_Cparam](../man/Figs/readme_df_Cparam.png)
 
 3. ###### Climate data
    `Computer_clim()`'function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***, ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, and ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.
