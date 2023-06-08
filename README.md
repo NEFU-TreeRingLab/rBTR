@@ -63,9 +63,11 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
 3. ###### Climate data
    
    `Computer_clim()` function is used to generate the clim input data for the BTR model.<br>
-   `Computer_clim()`function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***,<br>  
+   
+   `Computer_clim()`function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***,<br>
    ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, <br>
    ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.<br>
+
    Example climate data input.
    Use `data(LS_clim)` view sample climate data.
    ![readme_df_clim1.png](./man/Figs/readme_df_clim1.png)
