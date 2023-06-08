@@ -59,18 +59,18 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Use `data(clim_param)` view sample parameter data frame.
    If you only want to calculate the day length, set the parameter ***latitude***. The remaining parameters are used to           calculate soil moisture using the **cpc-leaky bucket** model.
 
-   ![readme_df_Cparam](../man/Figs/readme_df_Cparam.png)
+   ![readme_df_Cparam.png](./man/Figs/readme_df_Cparam.png)
 
 3. ###### Climate data
    `Computer_clim()`'function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***, ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, and ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.
    Example climate data input.
    Use `data(LS_clim)` view sample climate data.
     
-   ![cl1](./man/Figs/readme_df_readme_df_clim1.png)
+   ![readme_df_readme_df_clim1.png](./man/Figs/readme_df_readme_df_clim1.png)
 
    If you have more reliable soil moisture or VPD data for the sample site, `Computer_clim()` will only calculate the missing parts.
    Use `data(LS_climdata)` view sample climate data.
 
 
-   ![ readme_df_readme_df_clim2.png ](man/Figs)
-   <img src = "../man/Figs/readme_df_readme_df_clim2.png" , width = "80%" / >
+   ![ readme_df_readme_df_clim2.png ](man/Figs/readme_df_readme_df_clim2.png)
+
