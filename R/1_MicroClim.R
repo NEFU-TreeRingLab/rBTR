@@ -3,12 +3,23 @@
 #### cpc-leaky bucket
 #' cpc-leaky bucket
 #'
+#' #' \code{leakybucket.submonthly} simulates soil moisture with submonthly time step.
+#'
+#' Modifications of Suz Tolwinski-Ward's monthly time-step code by Nick Graham in 2011.
+#' Ported to R by SETW in 2015. Implementation of CPC Leaky Bucket model as described in
+#' Huang et al., 'Analysis of Model-Calculated Soil Moisture over the United States
+#' (1931-1993) and Applications to Long-Range Temperature Forecasts,' J. Clim. (1995)
+#'
+#'
+#'
 #' @param climdata climsdata
 #' @param parameters parameters
 #' @param syear start year
 #' @param eyear end year
 #'
-#' @return gE , gT ,gM , Ls et.al. climate factor
+#' @return gE , SoilM soil moisture, Ls, potEv et.al. climate factor
+#' ## SoilM soil moisture computed via the CPC Leaky Bucket model (in v/v, 12 x Nyrs)
+#' ## potEv Potential evapotranspiration computed via Thornthwaite's 1947 scheme (in mm).
 #'
 #' @importFrom dplyr filter select mutate
 #' @importFrom tidyr spread
@@ -41,113 +52,132 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
   ## 提取对应年份数据
   climdata <- dplyr::filter( climdata, Year >= syear & Year <= eyear)
 
+  if (all(names(climdata) != 'DOY')) {
+    climdata <- mutate(climdata, DOY =   as.POSIXlt(ISOdate(Year ,Month, Day))$yday+1   )
+  } ## if DOY end ---
+
+
+
   summaryMicroClim <- vector()
 
   iyear <- syear:eyear
 
   # 合并数据
-  rootd <- Compute_rootd(climdata, fixparam.Mclim, dynparam.Mclim)
-  dailyPrec <- Compute_P(climdata, fixparam.Mclim, dynparam.Mclim,rootd)
+
 
   gE <- Compute_gE(climdata, fixparam.Mclim, dynparam.Mclim,syear,eyear)##[,c(-1,-2)] ##syear, eyear,
 
-  data2 <- data.frame(gE, dailyPrec, rootd)
-
-  rm("dailyPrec" , "rootd" , "gE")
-
-  for (y in syear:eyear) {  ## 按年拆分数据循环
-    ydata <- dplyr::filter(data2, Year == y )
-
-    soilM <- potEv <- gT <- gM <- matrix(NA, nrow(ydata), 1)
-    deltaWaterFlow <- CG <- CR1 <- CR2 <- matrix(0, nrow(ydata), 1)
-
-    # attach(ydata$)
-
-    if(dynparam.Mclim$M0 < 0 ){ dynparam.Mclim$M0 = 300 / fixparam.Mclim$rootd0} #核对并修正初始值
-
-    for (day in 1: nrow(ydata)) {
-
-      if (ydata$rootd[day] > 0) {  ##土壤解冻后在进行计算
-
-        istar <- (ydata$TEM / 5) ^ 1.514 #1.514 = 53/35
-        istar[ydata$TEM < 0] <- NA
-        I <- mean(istar,na.rm=T)
-        ap <- (6.75e-7) * I ^ 3 - (7.71e-5) * I ^ 2 + (1.79e-2) * I + 0.49
-
-        if (ydata$TEM[day] <= 0){Ep = 0}
-        if (ydata$TEM[day] > 0 && ydata$TEM[day] < 26.5){Ep <- 16 * ydata$Ls[day] * (10 * ydata$TEM[day] / I) ^ ap}
-        if (ydata$TEM[day] >= 26.5){Ep <-  -415.85 + 32.25*ydata$TEM[day] - 0.43* ydata$TEM[day]^2}
-        Ep  <-  Ep/30.5
-
-        potEv[day]  <-  Ep
-
-        #参数初始化：
-        #dp = 2.0 # mm of precip per increment 每次计算步长递增降雨量
-        nstep <- floor(ydata$dailyPrec[day]/fixparam.Mclim$dp) +1 # number of sub-monthly substeps 步进计算长度
-        Pinc <- ydata$dailyPrec[day]/nstep # precip per substep每个子步骤
-        alphinc <- fixparam.Mclim$alph /nstep # runoff rate per substep time interval每个子步时间间隔的径流率
-        Epinc <- Ep/nstep # potential evapotrans per substep.每个子步骤潜在的蒸发量。
-
-        sm0 <- dynparam.Mclim$M0##初始土壤湿度= M0 ##首年第一天为直接赋值M0                ***
-
-        for(istep in 1:nstep){  ## 步长计算湿度
-          #计算蒸散：潜在蒸散Ep*(土壤湿度/最大持水量) 注：不同林分使用同样潜在蒸散量是否合适
-          Etrans <- Epinc*sm0*ydata$rootd[day]/(fixparam.Mclim$Mmax*ydata$rootd[day])
-
-          #计算下渗G：μ*α/(1+μ)*土壤湿度 ##实测排水速度为0.138mm/day
-          G  <-  ( fixparam.Mclim$mu.th*alphinc/(1+fixparam.Mclim$mu.th)*sm0*ydata$rootd[day] )# /30
-
-          #计算径流R，地面径流+地下径流
-          #地表径流=降雨*（土壤湿度/最大持水量）^m系数
-          #地下径流=alpha系数/（1+μ系数）*土壤湿度
-          R1  <-  ( Pinc*(sm0*ydata$rootd[day]/(fixparam.Mclim$Mmax*ydata$rootd[day]))^fixparam.Mclim$m.th )# /30# +
-          R2  <-  ( (alphinc/(1+fixparam.Mclim$mu.th))*sm0*ydata$rootd[day] ) #/30
-
-          # 总模型：土壤湿度=降雨（Pinc）- 蒸散（Etrans）-径流（R）-下渗（G）
-          dWdt <- Pinc - Etrans - R1 - R2 - G #总模型
-          sm1 <- sm0 + dWdt/ydata$rootd[day] #根深湿度
-          ##
-          deltaWaterFlow[day]  <-  deltaWaterFlow[day] + dWdt
-          CG[day]  <-  CG[day] + G   ##
-          CR1[day]  <-  CR1[day] + R1
-          CR2[day]  <-  CR2[day] + R2
-          ##
-
-          ##初步erro catch
-          sm0 <- max(sm1,fixparam.Mclim$Mmin)
-          sm0 <- min(sm0,fixparam.Mclim$Mmax)
-
-        } ## 湿度步进计算结束
-
-        soilM[day]  <-  sm0##不知道是否有效
-        # error-catching:错误捕捉
-        if (soilM[day] <= fixparam.Mclim$Mmin){soilM[day]  <-  fixparam.Mclim$Mmin;}
-        if (soilM[day] >= fixparam.Mclim$Mmax){soilM[day]  <-  fixparam.Mclim$Mmax;}
-        if (is.na(soilM[day])==1){soilM[day]  <-  fixparam.Mclim$Mmin;}
-
-        dynparam.Mclim$M0  <-  soilM[day]
+  data2 <- data.frame( gE )
 
 
-      }else{soilM[day]  <-  0;potEv[day]  <-  0} ##rootd[t]判断结束
+
+  if (  all(names(climdata) != 'soilM') ) {
+
+  rootd <- Compute_rootd(climdata, fixparam.Mclim, dynparam.Mclim)
+  dailyPrec <- Compute_P(climdata, fixparam.Mclim, dynparam.Mclim,rootd)
+  data2 <- data.frame(gE,dailyPrec, rootd)
+  # rm("dailyPrec" , "rootd" , "gE")
+
+    for (y in syear:eyear) {  ## 按年拆分数据循环
+      ydata <- dplyr::filter(data2, Year == y )
+
+      soilM <- potEv <- gT <- gM <- matrix(NA, nrow(ydata), 1)
+      deltaWaterFlow <- CG <- CR1 <- CR2 <- matrix(0, nrow(ydata), 1)
+
+      # attach(ydata$)
+
+      if(dynparam.Mclim$M0 < 0 ){ dynparam.Mclim$M0 = 300 / fixparam.Mclim$rootd0} #核对并修正初始值
+
+      for (day in 1: nrow(ydata)) {
+
+        if (ydata$rootd[day] > 0) {  ##土壤解冻后在进行计算
+
+          istar <- (ydata$TEM / 5) ^ 1.514 #1.514 = 53/35
+          istar[ydata$TEM < 0] <- NA
+          I <- mean(istar,na.rm=T)
+          ap <- (6.75e-7) * I ^ 3 - (7.71e-5) * I ^ 2 + (1.79e-2) * I + 0.49
+
+          if (ydata$TEM[day] <= 0){Ep = 0}
+          if (ydata$TEM[day] > 0 && ydata$TEM[day] < 26.5){Ep <- 16 * ydata$Ls[day] * (10 * ydata$TEM[day] / I) ^ ap}
+          if (ydata$TEM[day] >= 26.5){Ep <-  -415.85 + 32.25*ydata$TEM[day] - 0.43* ydata$TEM[day]^2}
+          Ep  <-  Ep/30.5
+
+          potEv[day]  <-  Ep
+
+          #参数初始化：
+          #dp = 2.0 # mm of precip per increment 每次计算步长递增降雨量
+          nstep <- floor(ydata$dailyPrec[day]/fixparam.Mclim$dp) +1 # number of sub-monthly substeps 步进计算长度
+          Pinc <- ydata$dailyPrec[day]/nstep # precip per substep每个子步骤
+          alphinc <- fixparam.Mclim$alph /nstep # runoff rate per substep time interval每个子步时间间隔的径流率
+          Epinc <- Ep/nstep # potential evapotrans per substep.每个子步骤潜在的蒸发量。
+
+          sm0 <- dynparam.Mclim$M0##初始土壤湿度= M0 ##首年第一天为直接赋值M0                ***
+
+          for(istep in 1:nstep){  ## 步长计算湿度
+            #计算蒸散：潜在蒸散Ep*(土壤湿度/最大持水量) 注：不同林分使用同样潜在蒸散量是否合适
+            Etrans <- Epinc*sm0*ydata$rootd[day]/(fixparam.Mclim$Mmax*ydata$rootd[day])
+
+            #计算下渗G：μ*α/(1+μ)*土壤湿度 ##实测排水速度为0.138mm/day
+            G  <-  ( fixparam.Mclim$mu.th*alphinc/(1+fixparam.Mclim$mu.th)*sm0*ydata$rootd[day] )# /30
+
+            #计算径流R，地面径流+地下径流
+            #地表径流=降雨*（土壤湿度/最大持水量）^m系数
+            #地下径流=alpha系数/（1+μ系数）*土壤湿度
+            R1  <-  ( Pinc*(sm0*ydata$rootd[day]/(fixparam.Mclim$Mmax*ydata$rootd[day]))^fixparam.Mclim$m.th )# /30# +
+            R2  <-  ( (alphinc/(1+fixparam.Mclim$mu.th))*sm0*ydata$rootd[day] ) #/30
+
+            # 总模型：土壤湿度=降雨（Pinc）- 蒸散（Etrans）-径流（R）-下渗（G）
+            dWdt <- Pinc - Etrans - R1 - R2 - G #总模型
+            sm1 <- sm0 + dWdt/ydata$rootd[day] #根深湿度
+            ##
+            deltaWaterFlow[day]  <-  deltaWaterFlow[day] + dWdt
+            CG[day]  <-  CG[day] + G   ##
+            CR1[day]  <-  CR1[day] + R1
+            CR2[day]  <-  CR2[day] + R2
+            ##
+
+            ##初步erro catch
+            sm0 <- max(sm1,fixparam.Mclim$Mmin)
+            sm0 <- min(sm0,fixparam.Mclim$Mmax)
+
+          } ## 湿度步进计算结束
+
+          soilM[day]  <-  sm0##不知道是否有效
+          # error-catching:错误捕捉
+          if (soilM[day] <= fixparam.Mclim$Mmin){soilM[day]  <-  fixparam.Mclim$Mmin;}
+          if (soilM[day] >= fixparam.Mclim$Mmax){soilM[day]  <-  fixparam.Mclim$Mmax;}
+          if (is.na(soilM[day])==1){soilM[day]  <-  fixparam.Mclim$Mmin;}
+
+          dynparam.Mclim$M0  <-  soilM[day]
 
 
-    } ## 年内
+        }else{soilM[day]  <-  0;potEv[day]  <-  0} ##rootd[t]判断结束
 
 
-    microclim <- data.frame(soilM, potEv ,CG,CR1,CR2,deltaWaterFlow   )  ## ,gT,gM
-    summaryMicroClim <- rbind(summaryMicroClim,microclim)
-    # detach(ydata)
-  }  ##  年循环 out
+      } ## 年内
 
-  mclim <- cbind(data2,summaryMicroClim) #%>% select(c("Year", "Month","Day","DOY","gE","gT","gM","soilM","TEM","Ls","dailyPrec"))
 
+      microclim <- data.frame(soilM, potEv ,CG,CR1,CR2,deltaWaterFlow   )  ## ,gT,gM
+      summaryMicroClim <- rbind(summaryMicroClim,microclim)
+      # detach(ydata)
+    }  ##  年循环 out
+
+
+
+
+    data2 <- cbind(data2,summaryMicroClim) #%>% select(c("Year", "Month","Day","DOY","gE","gT","gM","soilM","TEM","Ls","dailyPrec"))
+
+  } ## end if any soilM
   # detach(fixparam.Mclim)
 
-  dL_i <- c( 0 , diff( mclim$Ls ) ) *12
+  dL_i <- c( 0 , diff( data2$Ls ) ) *12
 
-  Microclim <- cbind( mclim , dL_i )
+  Microclim <- cbind( data2 , dL_i )
 
-  Microclim <- dplyr::mutate(Microclim,VPD = 0.61078*exp(17.27*TEM/(TEM+237.3))*(1-RH))
+  if (all(names(climdata) != 'VPD')) {
+    Microclim <- dplyr::mutate(Microclim,VPD = 0.61078*exp(17.27*TEM/(TEM+237.3))*(1-RH))
+  }## if any VPD
+
 
 
   return(Microclim)
@@ -170,7 +200,7 @@ compute_daylengthfactor <-function( fixparam.Mclim, dynparam.Mclim ){  ## daylen
   colnames(gE)  <-  c('gE365', 'gE366', 'L365', 'L366')
 
   #单位转换与常数设置
-  lat  <-  fixparam.Mclim$phi * pi / 180# change to radians 角度改为弧度制
+  lat  <-  fixparam.Mclim$latitude * pi / 180# change to radians 角度改为弧度制
   I_0  <-  118.109#太阳常数MJ/s
   DAL  <-  c(365, 366)
   for (ly in 1:2) {

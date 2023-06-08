@@ -178,3 +178,20 @@
 ##' temperature (TEM) and relative humidity (RH).
 ##'
 'LS_clim'
+
+##' Daily Mean Temperature, soil moisture and VPD for
+##' Liangshui,China
+##'
+##' This dataset gives the daily mean temperature, soil Moisture and
+##' VPD at Liangshui, Yichun, Heilongjiang, China.
+##' @source A process-based model of xylogenesis and tree-ring formation of
+##' broad-leaved trees (BTR) driven by climate. (not published yet)
+##' @docType data
+##' @keywords datasets
+##' @name LS_climdata
+##' @usage data(LS_climdata)
+##' @format A \code{data.frame} containing 6 columns with year (Year),
+##' month (Month),day (Day), soil moisture (soilM),
+##' temperature (TEM) and VPD (VPD).
+##'
+'LS_climdata'
