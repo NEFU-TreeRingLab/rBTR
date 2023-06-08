@@ -33,9 +33,9 @@ This is a basic example which shows you how to solve a common problem:
 ```r
 library(rBTR)
 
-## computer daylength, soil moisture and VPD
+## computer daylength, gE, soil moisture, VPD, etc.
 Climate_data <- Compute_clim( climdata = LS_clim , parameters = Clim_param , syear = NA, eyear = NA )
-# or
+# or computer daylength, gE , $\Delta$Li etc.
 Climate_data <- Compute_clim( climdata = LS_climdata , parameters = Clim_param , syear = NA, eyear = NA )
 
 ## Simulate tree growth
@@ -49,33 +49,24 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    
    Example growth parameters list. Key cols are required columns in the data frame, they  are called in the BTR model.
    Use `data(BP_param)` or` data(FM_param)` view sample parameter data frame.
-   
    ![readme_df_Gparam.png](./man/Figs/readme_df_Gparam.png)
 
-
 2. ###### Climate parameters list
-
+   
    Example climate parameters list. 
    Use `data(clim_param)` view sample parameter data frame.
    If you only want to calculate the day length, set the parameter ***latitude***. The remaining parameters are used to           calculate soil moisture using the **cpc-leaky bucket** model.
-
    ![readme_df_Cparam.png](./man/Figs/readme_df_Cparam.png)
 
 3. ###### Climate data
-
+   
    `Computer_clim()` function is used to generate the clim input data for the BTR model.
-
    `Computer_clim()`function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***,
    ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, 
    ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.
    Example climate data input.
    Use `data(LS_clim)` view sample climate data.
-    
    ![readme_df_clim1.png](./man/Figs/readme_df_clim1.png)
-
-   If you have more reliable soil moisture or VPD data for the sample site, `Computer_clim()` will only calculate the missing parts.
-   Use `data(LS_climdata)` view sample climate data.
-
-
+   If you have more reliable ***soilM (soil moisture)*** or ***VPD*** data for the sample site, `Computer_clim()` will only calculate the missing parts.
+   Use `data(LS_climdata)` view sample climate data2.
    ![ readme_df_clim2.png ](man/Figs/readme_df_clim2.png)
-
