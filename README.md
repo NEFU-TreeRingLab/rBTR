@@ -50,7 +50,9 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Example growth parameters list. Key cols are required columns in the data frame, they  are called in the BTR model.
    Use `data(BP_param)` or` data(FM_param)` view sample parameter data frame.
    
-   ![](man/FIgs/readme_df_Gparam.png)
+   ![GPdf](man/FIgs/readme_df_Gparam.png)
+
+   ![GPdf](man/FIgs/readme_df_Gparam2.tif)
 
 2. ###### Climate parameters list
 
