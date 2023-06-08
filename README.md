@@ -56,6 +56,7 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
    Example climate parameters list. 
    Use `data(clim_param)` view sample parameter data frame.
    If you only want to calculate the day length, set the parameter ***latitude***. The remaining parameters are used to           calculate soil moisture using the **cpc-leaky bucket** model.
+
    <img src = "man/FIgs/readme_df_Cparam.png" , width = "80%" / >
 
 3.###### Climate data
@@ -66,4 +67,5 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
 
    If you have more reliable soil moisture or VPD data for the sample site, `Computer_clim()` will only calculate the missing parts.
    Use `data(LS_climdata)` view sample climate data.
+
    <img src = "man/FIgs/readme_df_readme_df_clim2.png" , width = "80%" / >
