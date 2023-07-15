@@ -200,7 +200,7 @@ compute_daylengthfactor <-function( fixparam.Mclim, dynparam.Mclim ){  ## daylen
   colnames(gE)  <-  c('gE365', 'gE366', 'L365', 'L366')
 
   #单位转换与常数设置
-  lat  <-  fixparam.Mclim$latitude * pi / 180# change to radians 角度改为弧度制
+  lat  <-  fixparam.Mclim$phi * pi / 180# change to radians 角度改为弧度制
   I_0  <-  118.109#太阳常数MJ/s
   DAL  <-  c(365, 366)
   for (ly in 1:2) {
