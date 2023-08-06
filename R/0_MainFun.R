@@ -285,7 +285,8 @@ btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = F){ ##
       max(VNoV,na.rm = T) ,
     RingWidth = (mean( parameters$values[ parameters$parameter == "width"] / CTD ,na.rm = T) *
              sum(CA,na.rm = T) + sum(VCA,na.rm = T)) /
-             parameters$values[ parameters$parameter == "width"] / 1000
+             parameters$values[ parameters$parameter == "width"] / 1000,
+    VesselNumber = max(VNoV,na.rm = T )
 
   )
 
