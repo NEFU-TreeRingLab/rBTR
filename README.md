@@ -6,8 +6,7 @@
 
 <!-- badges: end -->
 
-**Rpackage for the BTR model is still under development.**
-
+**This is the development release of BTR model**
 
 rBTR is an Rpackage of the Broadleaved Tree-Ring (BTR) model. 
 
@@ -61,14 +60,14 @@ Res <- btr( clim = Climate_data, parameters = BP_param, syear = NA, eyear = NA, 
 3. ###### Climate data
    
    `Computer_clim()` function is used to generate the clim input data for the BTR model.<br>
-
    `Computer_clim()`function could use ***latitude*** to calculate ***Li (daylength)*** and ***gE (relative rate of cell growth driven by daylength)***,<br>
    ***MAT (mean air temperature)*** and ***PRE (precipitation)*** to calculate ***soilM (soil moisture)***, <br>
    ***RH (Relative Humidity)*** and ***MAT*** to calculate ***VPD (vapor pressure deficit)***.<br>
-
    Example climate data input.<br>
    Use `data(LS_clim)` view sample climate data.
    ![readme_df_clim1.png](./man/Figs/readme_df_clim1.png)
    If you have more reliable ***soilM (soil moisture)*** or ***VPD*** data for the sample site, `Computer_clim()` will only calculate the missing parts.<br>
    Use `data(LS_climdata)` view sample climate data2.
    ![ readme_df_clim2.png ](man/Figs/readme_df_clim2.png)
+
+
