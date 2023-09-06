@@ -12,7 +12,7 @@
 #'
 #' @return  a excel data
 #'
-#' @importFrom dplyr filter select select left_join bind_rows
+#' @importFrom dplyr filter select select left_join bind_rows summarise
 #' @importFrom tidyr spread
 #' @importFrom magrittr %>%
 #' @importFrom utils txtProgressBar setTxtProgressBar
@@ -210,9 +210,9 @@ btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = F){ ##
         todayFibers <- xylogenesis[["cells"]]
 
 
-        colnames(todayVessels) <- paste("V", sep = "" , colnames(todayVessels) )
+        colnames(todayVessels) <- paste( colnames(todayVessels), sep = "" ,"_v" )
 
-        dailyResult <- dplyr::left_join(todayFibers, todayVessels, by = c("Year" = "VYear", "cell_L" = "Vcell_L") )
+        dailyResult <- dplyr::left_join(todayFibers, todayVessels, by = c("Year" = "Year_v", "cell_L" = "cell_L_v") )
 
         # dailyResult
         #%>% mutate(doy = "Today", .after = "Year")
@@ -260,12 +260,19 @@ btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = F){ ##
 
     dailyParameters <- rbind(dailyParameters,interimDailyParam)
     if (intraannual == T) {
-    data.table::rbindlist(summaryDaily,use.names = T,fill = T,idcol = "doy") %>% dplyr::select(c("Year","doy","cell_L",everything())) %>%
+      data.table::rbindlist(summaryDaily,use.names = T,fill = T,idcol = "doy") %>%
+        dplyr::select(c("Year","doy","cell_L",everything())) %>%
         data.table::fwrite(paste0(redir,"/", as.character(years), ".csv" )   )
     }
 
 
-    summaryYears[[as.character(years)]]  <- dailyResult %>%  dplyr::select(c("Year","cell_L",everything()))
+    summaryYears[[as.character(years)]]  <- dailyResult %>%  dplyr::select(c("Year","cell_L",everything())) %>%
+      dplyr::mutate( VAs = CA_v *VN_v, CAs = parameters$values[ parameters$parameter == "width"]  / CTD * CA   )
+
+    summaryYears[[as.character(years)]]$VAs[ is.na(summaryYears[[as.character(years)]]$VAs) ] <-  0
+
+    summaryYears[[as.character(years)]] <- summaryYears[[as.character(years)]] %>%
+      dplyr::mutate( Raddist =  round(  (cumsum( VAs +  CAs ) - VAs -  CAs)/parameters$values[ parameters$parameter == "width"]   ,3  )    ) %>% select(-VAs,-CAs)
 
     close(con = pb)
 
@@ -279,14 +286,15 @@ btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = F){ ##
   parameters$values[ parameters$parameter == "width"]
 
   annaulRing <-
-    summaryYears %>% filter(Year >= syear) %>% group_by(Year) %>%summarise(
+    summaryYears %>% dplyr::filter(Year >= syear) %>% dplyr::group_by(Year) %>% dplyr::summarise(
     CellLayer = max(cell_L,na.rm = T),
     CellNumber = mean( parameters$values[ parameters$parameter == "width"]  / CTD * CellLayer ,na.rm = T) +
-      max(VNoV,na.rm = T) ,
+      max(NoV_v,na.rm = T) ,
     RingWidth = (mean( parameters$values[ parameters$parameter == "width"] / CTD ,na.rm = T) *
-             sum(CA,na.rm = T) + sum(VCA,na.rm = T)) /
+             sum(CA,na.rm = T) + sum(CA_v,na.rm = T)) /
              parameters$values[ parameters$parameter == "width"] / 1000,
-    VesselNumber = max(VNoV,na.rm = T )
+    VesselNumber = max(NoV_v,na.rm = T ),
+    maxVA = max( CV_v,na.rm = T )
 
   )
 

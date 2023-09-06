@@ -66,14 +66,14 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
 
   gE <- Compute_gE(climdata, fixparam.Mclim, dynparam.Mclim,syear,eyear)##[,c(-1,-2)] ##syear, eyear,
+  rootd <- Compute_rootd(climdata, fixparam.Mclim, dynparam.Mclim)
 
-  data2 <- data.frame( gE )
-
+  data2 <- data.frame( gE,rootd )
 
 
   if (  all(names(climdata) != 'soilM') ) {
 
-  rootd <- Compute_rootd(climdata, fixparam.Mclim, dynparam.Mclim)
+
   dailyPrec <- Compute_P(climdata, fixparam.Mclim, dynparam.Mclim,rootd)
   data2 <- data.frame(gE,dailyPrec, rootd)
   # rm("dailyPrec" , "rootd" , "gE")
