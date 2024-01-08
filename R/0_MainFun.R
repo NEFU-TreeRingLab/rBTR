@@ -6,9 +6,22 @@
 #'
 #' @param clim  climate data must have Year，DOY，Temp ，Prec
 #' @param parameters model parameter date ，we ues a excel data to save it.
+#' @param age age trend of simulate ring
 #' @param syear modeling start year
 #' @param eyear modeling end year
-#' @param intraannual output daily result
+#' @param writeRes auto write res_data, logical value, if 'Ture', output result list as xlsx in file.
+#' @param intraannual output daily result, logical, if 'Ture', output daily result in file.
+#' @param gTmethod method of calculate gT ,'VS' and 'Jonhson et al.'
+#'
+#' ### delete this part
+#' @param division dealtDivision 'fix' is constant, 'limit' is gM/gV & RCTA control. ## cancel this part
+#' @param testLim use Lage limit mw & ml , Lage in age param_data, regulation cell enlargement by CAmax param .#'
+#' @param CZgR growth limit : climate-Cambial Cell, cell wall-gM, cell wall-gV, NewgRtype; 0 for False, 1 for True#'
+#' @param Dcase How to calculate Division Limit, including: "min","mean","multiply".
+
+#' @param Pbar Whether to show progress bar
+#' @param testMod test Mode, logical, if 'False', Lage&Dage use ratio
+
 #'
 #' @return  a excel data
 #'
@@ -16,7 +29,7 @@
 #' @importFrom tidyr spread
 #' @importFrom magrittr %>%
 #' @importFrom utils txtProgressBar setTxtProgressBar
-#' @importFrom data.table rbindlist fwrite
+#' @importFrom data.table rbindlist fwrite as.data.table
 #' @importFrom openxlsx write.xlsx
 #' @importFrom stats na.omit
 #'
@@ -24,292 +37,360 @@
 #' @export
 #'
 
-btr <- function(  clim, parameters, syear = NA, eyear = NA ,intraannual = F){ ## functions start  ring_width,
 
-  redir <- paste0("res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
+btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
+                  writeRes = T,intraannual = F, gTmethod = "Jonhson" ,
+                  division = "limit" ,
+                  testLim = F,
+                  CZgR = c(1,0,0,1 ) ,
+                  Pbar = F ,
+                  testMod = F ,
+                  Dcase = "min",
+                  Named = NULL ) { ## functions start  ring_width,
 
+  ##
+  writeRes[intraannual == T] <- T
 
-  dir.create(path = eval(redir) )
+  if (writeRes == T) {
+    redir <- paste0(  Named,  "res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
 
-  ## 提取微气候模型参数
+    dir.create(path = eval(redir) )
+  }
+
+   ## 提取微气候模型参数
 
   parameters$values <- as.numeric(parameters$values)
-
-  growth_Param  <- dplyr::filter(parameters, modul == "gR"  ) ## 生长速率阈值参数
+  growth_Param  <- parameters[parameters$modul == "gR",] ## 生长速率阈值参数
 
   ## error-catching
-  if (is.na(syear) ) {syear = min(clim$Year)} else {
-    if( syear < min(clim$Year) ){ print("syear is wrong") }
+  if (is.na(syear) ) {syear = max( min(clim$Year), min(age$Year)  )   } else {
+    if( syear < max( min(clim$Year), min(age$Year)  )   ){ stop( paste("syear is wrong:", syear,"ClimY:", min(clim$Year),"AgeY:" ,min(age$Year) ) ) }
   }
 
-  if (is.na(eyear)) {eyear = max(clim$Year)} else {
-    if( eyear > max(clim$Year) ){ print("eyear is wrong") }
+  if (is.na(eyear)) {eyear = min(max(clim$Year) , max(age$Year))      } else {
+    if( eyear > min(max(clim$Year) , max(age$Year)) ){ stop( paste(  "eyear is wrong:",eyear, "ClimY:",max(clim$Year), "AgeY:",max(age$Year)  ) ) }
   }
+
   ## 提取对应年份数据
-  clim <- dplyr::filter( clim, Year >= syear & Year <= eyear)
+  clim <- clim[clim$Year %in% c(syear:eyear), ]
+  age <- age[age$Year %in% c(syear:eyear), ]
 
-  microclim <- Compute_gR(clim , growth_Param)
+  if ( all( gTmethod == "VS" ) ) {
+    microclim <- Compute_gR(clim , growth_Param) |>
+      dplyr::left_join(age,by="Year")  |>
+      data.table::as.data.table() ##VS
+  } else { microclim <- Compute_gR2(clim , growth_Param) |>
+    dplyr::left_join(age,by="Year")  |>
+    data.table::as.data.table() } ## 'Jonhson'
+
 
   ##### 细胞大小计算 ——————
 
   ## 提取分裂模型参数：
 
-  fixparam.divi <- dplyr::filter(parameters ,  modul == "division" & paramtype == "fixed") %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.divi <- parameters[ parameters$modul == "division" & parameters$paramtype == "fixed",
+                               c("parameter","values") ]   |>
+    tidyr::spread( key = 'parameter', value = 'values')
 
-  fixparam.growth.fiber <- dplyr::filter(parameters ,  modul == "growthC" & paramtype == "fixed") %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.growth.fiber <- parameters[parameters$modul == "growthC" & parameters$paramtype == "fixed" ,
+                                      c("parameter","values")]  |>
+    tidyr::spread( key = 'parameter', value = 'values')
 
-  fixparam.growth.vessel <- dplyr::filter(parameters ,  modul == "growthV" & paramtype == "fixed") %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.growth.vessel <- parameters[parameters$modul == "growthV" & parameters$paramtype == "fixed",
+                                       c("parameter","values") ] |>
+    tidyr::spread( key = 'parameter', value = 'values')
 
-  dynparam.growth.0 <- dplyr::filter(parameters ,  modul == "division" & paramtype == "dynamic") %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = 'parameter', value = 'values')
+  dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,
+                                  c("parameter","values") ] |>
+    tidyr::spread( key = 'parameter', value = 'values')
+
+  fixparam.growth.origin <- parameters[parameters$paramtype == "fixed",
+                                       c("parameter","modul", "values")]
 
   ## 年循环计算
+  ## RCTA line
 
-  cells <- dplyr::filter(parameters ,  grepl("C0", modul ) ) %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = 'parameter', value = 'values')
+  RCTA <- fixparam.divi$maxRCTA  *
+    nor( microclim$L_i.vessel[microclim$Year == syear ] *-1 )
+  RCTA[ RCTA <=  fixparam.divi$maxRCTA * fixparam.divi$RCTADivT  ] <- 99
+  ## __end ----
+
+  cells <- dplyr::filter(parameters ,  grepl("C0", modul ) ) |>
+    dplyr::select( c("parameter","values") ) |>
+    tidyr::spread( key = 'parameter', value = 'values') |>
+    dplyr::select( "cell_L","Year", everything())
   cells[is.na(cells)] <- 0
 
-  vessels <- dplyr::filter(parameters ,  grepl("V0", modul ) ) %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = 'parameter', value = 'values')
+  vessels <- dplyr::filter(parameters ,  grepl("V0", modul ) ) |>
+    dplyr::select( c("parameter","values") ) |>
+    tidyr::spread( key = 'parameter', value = 'values')|>
+    dplyr::select( "cell_L","Year", everything())
   vessels[is.na(vessels)] <- 0
 
   temThreshold <- dplyr::filter(growth_Param, parameter == "T1")$values
 
   ##test use
-  dailyParameters = logical()
-  # tt1 = matrix(NA,ncol = 15,nrow = 366)
-  # colnames(tt1) <-c("years","Today",colnames(dynparam.growth.t))
-  ##
+  # dailyParameters = logical()
+  dailyParameters <- data.frame(rep( syear:eyear,each =366  ),
+                                rep( 1:366,time = (eyear - syear +1)  ),
+                                matrix(nrow = (eyear - syear +1) *366, ncol= 19   ))
 
-  summaryYears <- list()
+  colnames(dailyParameters) <- c('years',	'Today',	'Age',	'czgR',	'dCA_cz'	,'deltaVN',	'egR',	'grwothSeason',
+                                 'L_i.fiber',	'L_i.vessel',	'SumCL',	'SumV',	'SumVL',	'T_age',
+                                 'v_c.fiber',	'v_c.vessel',	'v_l.fiber',	'v_l.vessel',	'v_w.fiber',	'v_w.vessel',	'Vcz')
+
+  prow <- ceiling( 10/log( 2, (age$Tage * fixparam.divi$va_cz + 1) ))*
+    microclim[ gT > 0,.(x = max(DOY) - min(DOY)) ,by = Year ][,x]
+
+  summaryYears <- purrr::map2( seq(syear,eyear,1) , prow ,
+                               function( x ,prow){ c <- data.frame( seq(1: prow) , rep( x,prow  ),matrix(nrow =prow,ncol = 27   ) )
+                               colnames(c) <- c( colnames(cells), paste0("V", colnames(vessels[,-1:-2])) ,
+                                                 "VAs" , "CAs" ,"Dh" ,"Kh","Raddist"   )
+                               return( c ) }  )
+  names( summaryYears ) <- as.character( syear:eyear )
+
+  ## summary data.table
+  AnnualGrowth <- matrix(nrow = (eyear - syear +1) *366, ncol= 16   ) |> as.data.frame()
+
+  colnames(AnnualGrowth ) <- c( 'Year' ,'DOY' , 'RingArea' ,'RingWidth' ,'CellLayer' ,
+                                'MeanVesselLumenArea' , 'MaxesselLumenArea', 'VesselNumber' ,'CellNumber' , 'VesselTotalLumenArea',
+                                'VesselDensity', 'RCTA', 'MeanDh' , 'MeanKh' ,'Ks','dD' )
+
+
+  AnnualGrowth$Year <- rep( syear:eyear,each =366  )
+  AnnualGrowth$DOY  <- rep( 1:366,time = (eyear - syear +1)  )
 
 
   for (years in syear:eyear) { ## year cycle start  年循环计算
 
 
+    RCTAt <- 0 ### RCTA for dD
+    gR.year <- microclim[microclim$Year == years,]
+
+    Xy.fiber  <- data.frame( seq(1: prow[years-syear+1] ) , rep( years,prow[years-syear+1]  ) , matrix( ncol = 10 , nrow = prow[years-syear+1] )   )
+    Xy.vessel <- data.frame( seq(1: prow[years-syear+1]) , rep( years,prow[years-syear+1]  ) , matrix( ncol = 12 , nrow = prow[years-syear+1] )   )
 
 
 
-    xylogenesis <- list(cells[-1,],vessels[-1,])
-    names(xylogenesis) <- c("cells","vessels")
+    colnames(Xy.fiber) <- colnames(cells)
+    colnames(Xy.vessel) <- colnames(vessels)
 
-    gR.year <- dplyr::filter(microclim , Year == years)
+    ## check max VCA
+    if ( is.na( unique(gR.year$Lage)) == F ) {
+      ## VCA - age
+
+      if( testMod == T ){
+
+        fixparam.growth.vessel$CAmax <- gR.year$Lage[1]
+        fixparam.divi$deltaD         <- gR.year$Dage[1]
+
+      }else{
+        fixparam.growth.vessel$CAmax <- gR.year$Lage[1] *
+          fixparam.growth.origin$values[fixparam.growth.origin$parameter == "CAmax" & fixparam.growth.origin$modul == "growthV" ]
+        fixparam.divi$deltaD <- gR.year$Dage[1] *
+          fixparam.growth.origin$values[fixparam.growth.origin$parameter == "deltaD" & fixparam.growth.origin$modul =="division" ]
+      }
+
+    }
 
     ### 进度条
-    print(  paste0("Modeling ", years," / ", "Final ", eyear )    )
-    pb <- utils::txtProgressBar(title = "PB",min = 1, max = nrow(gR.year), style = 3, file = stderr())
+    if (Pbar == T ) {
+      print(  paste0("Modeling ", years," / ", "Final ", eyear )    )
+      pb <- utils::txtProgressBar(title = "PB",min = 1, max = nrow(gR.year), style = 3, file = stderr())
+    }
+
 
     ## 年初重置部分参数
     dynparam.growth.t <- dynparam.growth.0
     dynparam.growth.t$Age <- dynparam.growth.t$Age + years - syear
-    # dynparam.growth.t$Dd = 0
-    # dynparam.growth.t$SumV = 0
-    # dynparam.growth.t$SumCL = 1
-    # dynparam.growth.t$SumNV = 1
+    growth.day <- 1
 
-    # j  = 1  ## 正在生长的细胞层数计数
-    # k  = 1  ## 正在生长的导管层数计数
-    # dcl = 0  ## 完成生长的细胞层数计数
-    # dvl = 0  ## 完成生长的导管层数计数
-    interimDailyParam <- matrix(NA,ncol = ncol(dynparam.growth.t)+2,nrow = 366)
-    colnames(interimDailyParam) <- c("years","Today",colnames(dynparam.growth.t))
     ## 重置结束
     actAccumulatedTem <- 0 ## 活动积温 active accumulated temperature
     # TA <- 0
-
-    summaryDaily <- list()
+    summaryDaily <- purrr::map( 1 :366 ,
+                                function(x , prow ){ c <- data.frame( seq(1: prow) , rep( x,prow  ),matrix(nrow =prow,ncol = 27   ) )
+                                colnames(c) <- c( colnames(cells), paste0("V", colnames(vessels[,-1:-2])) ,"VAs","CAs","Dh","Kh","Raddist"   )
+                                return( c ) } ,prow[years - syear+1]  )
 
     for ( Today in 1:nrow(gR.year) ) { ## daily sycle start
-      # for (Today in 1:130) {
-
-
-      # print("")
-      # print(c(years,Today))
-      # print(dynparam.growth.t)
-
-      # cat( c(years, Today,"\n",as.character(dynparam.growth.t)) , file = "E:\\文档-正在使用\\论文内容\\202203\\code\\11.txt",
-      #      sep = " ", fill = T, labels = paste0("{", 1:10, "}:"),append = T)
 
       clim.today <- gR.year[Today,]
 
       aatToday <- (clim.today$TEM - temThreshold)
       aatToday[aatToday<0] <- 0
       actAccumulatedTem <- actAccumulatedTem + aatToday
-      # print( paste( Today, actAccumulatedTem ,clim.today$rootd )  )
-
-      # dynparam.growth.t <- L_balance(clim.today, dynparam.growth.t ,fixparam.light)
 
       if (actAccumulatedTem >= fixparam.divi$AAT & clim.today$rootd > 0 ) { ## if start 可以生长时计算细胞分裂分化
 
-          # print( paste( "START",Today    ) )
+        ## Division period start
+        climateDivLim  <- fixparam.divi$a1 * min(clim.today$gM ,clim.today$gV )
 
-        newCells <-  cell_division(clim.today, fixparam.divi, fixparam.growth.fiber, fixparam.growth.vessel, dynparam.growth.t,
-                             cells, vessels) ### , TVA,TA
+        rctaDivLim <- fixparam.divi$a2 *RCTAt/RCTA[ Today ]
+        rctaDivLim[ RCTA[ Today ]  == 99 ] <- climateDivLim ## ERROR CATCH
+
+        Div_limit <- min(climateDivLim,rctaDivLim)
+
+        deltaD_T <- fixparam.divi$deltaD * ( 1 +  fixparam.divi$Div_alpha-
+                                               exp( log(1/fixparam.divi$Div_alpha) * - Div_limit )  )
+        ### Division  period end
+
+        newCells <-  cell_division(clim.today = clim.today, fixparam.divi = fixparam.divi,
+                                   fixparam.growth.fiber = fixparam.growth.fiber,
+                                   fixparam.growth.vessel = fixparam.growth.vessel,
+                                   dynparam.growth.t = dynparam.growth.t,
+                                   cells = cells, vessels = vessels,CZgR = CZgR,deltaD_T = deltaD_T)
+        ### , TVA,TA
 
         newCells[[1]]  <- stats::na.omit(newCells[[1]])
         newCells[[2]]  <- stats::na.omit(newCells[[2]])
-        # TC <- TC + newCells[[4]][1]
-
 
         dynparam.growth.t <- newCells[[3]]
-        # tt2 <- cbind(years,Today,dynparam.growth.t)
-        interimDailyParam[Today,] <- as.numeric(c(years,Today,dynparam.growth.t))
+
+        dailyParameters[ dailyParameters$years == syear & dailyParameters$Today == Today , ] <-  c(years,Today,dynparam.growth.t)
         ##
 
-        if ( nrow(newCells[[1]]) != 0  ) {
-          xylogenesis[["cells"]] <- dplyr::bind_rows(xylogenesis[["cells"]],newCells[[1]])
-          if (nrow(newCells[[2]])!= 0 ) {
-            xylogenesis[["vessels"]] <- dplyr::bind_rows(xylogenesis[["vessels"]],newCells[[2]])
-          }
-        } ## newCells != 0
+        Xy.fiber[ Xy.fiber$cell_L %in% newCells[[1]]$cell_L,  ] <- newCells[[1]]
+
+        Xy.vessel[ Xy.vessel$cell_L %in% newCells[[2]]$cell_L,  ] <- newCells[[2]]
 
         ## 细胞生长部分 #####
 
-        # j <- dcl
-        # k <- dvl
-        layer.max <- nrow(xylogenesis[["cells"]])
-        #
-        # nrow(xylogenesis[["cells"]]$DDOY = 0 )
-        growthing.cells <- dplyr::filter( xylogenesis[["cells"]] , DDOY == 0  )
-        if ( layer.max != 0 & nrow( growthing.cells ) != 0 ) {
+
+        layer.max.f <- nrow( Xy.fiber[ !is.na(Xy.fiber$EDOY),  ]  )
+
+        growthing.fiber <- Xy.fiber[ !is.na(Xy.fiber$EDOY)& Xy.fiber$DDOY == 0  ,  ]
+        if ( layer.max.f != 0 & nrow( growthing.fiber ) != 0 ) {
 
 
 
-          growthing.cells <- cells_growth(cell = growthing.cells, CorV = "C" , clim.today, layer.max,
-                            fixparam.growth.fiber, fixparam.growth.vessel, dynparam.growth.t )
-          # growthing.cells$DDOY = clim.today$DOY
+          growthing.fiber <- cells_growth(cell = growthing.fiber, CorV = "C" , clim.today, layer.max.f,
+                                          fixparam.growth.fiber, fixparam.growth.vessel, dynparam.growth.t )
 
-
-          rowOfCells <- growthing.cells$cell_L
-
-          xylogenesis[["cells"]][rowOfCells,] <- growthing.cells
+          Xy.fiber[ Xy.fiber$cell_L %in% growthing.fiber$cell_L, ] <- growthing.fiber
 
         } ## cell end-------------
 
-        layer.max <- nrow(xylogenesis[["vessels"]])
-        growthing.cells <- dplyr::filter( xylogenesis[["vessels"]], DDOY == 0  )
+        layer.max.v <- nrow(Xy.vessel[ !is.na(Xy.vessel$EDOY),  ])
+        growthing.vessel <- Xy.vessel[ !is.na(Xy.vessel$EDOY)& Xy.vessel$DDOY == 0  ,  ]
 
-        if( layer.max != 0 & nrow(growthing.cells) != 0  ){  ## 有导管时导管生长
+        if( layer.max.v != 0 & nrow(growthing.vessel) != 0  ){  ## 有导管时导管生长
 
 
 
-          growthing.cells <- cells_growth(cell = growthing.cells, CorV = "V" , clim.today, layer.max,
-                            fixparam.growth.fiber,fixparam.growth.vessel, dynparam.growth.t)
+          growthing.vessel <- cells_growth(cell = growthing.vessel, CorV = "V" , clim.today, layer.max.v,
+                                           fixparam.growth.fiber,fixparam.growth.vessel, dynparam.growth.t)
 
-          rowOfCells <- growthing.cells$NoV
-
-          xylogenesis[["vessels"]][rowOfCells,] <- growthing.cells
+          Xy.vessel[Xy.vessel$cell_L %in% growthing.vessel$cell_L ,] <- growthing.vessel
 
         } ## 有导管时导管生长 end ---------------------
 
+        if(  layer.max.v+layer.max.f != 0 ){
+          growth.day <- as.numeric(Today)
+          summaryDaily[[ Today ]][,1:12] <- Xy.fiber
+          summaryDaily[[Today]][,13:24] <- Xy.vessel[,-1:-2]
+          summaryDaily[[Today]] <-
+            summaryDaily[[Today]][ !is.na( summaryDaily[[Today]]$EDOY ),]
 
-        todayVessels <- xylogenesis[["vessels"]]
-        todayFibers <- xylogenesis[["cells"]]
+          summaryDaily[[Today]] <-
+            dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,CAs = parameters$values[ parameters$parameter == "width"]  / CTD * CA   )
 
+          summaryDaily[[Today]]$VAs[ is.na(summaryDaily[[Today]]$VAs) ] <-  0
 
-        colnames(todayVessels) <- paste( colnames(todayVessels), sep = "" ,"_v" )
+          summaryDaily[[Today]] <-
+            dplyr::mutate( summaryDaily[[Today]] ,Dh = (VCRD-2*VWT) ,  Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,
+                           Raddist =  round(  (cumsum( VAs +  CAs ) - VAs -  CAs)/parameters$values[ parameters$parameter == "width"]   ,3  )    )
 
-        dailyResult <- dplyr::left_join(todayFibers, todayVessels, by = c("Year" = "Year_v", "cell_L" = "cell_L_v") )
+          daily.t <- summaryDaily[[Today]]
 
-        # dailyResult
-        #%>% mutate(doy = "Today", .after = "Year")
+          daily.t$VCV[daily.t$VDDOY == 0 ] <- 0
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 3:15 ] <-  daily.t   |> ## 筛选成熟细胞
+            dplyr::summarise(
+              RingArea = (mean( parameters$values[ parameters$parameter == "width"] / CTD ,na.rm = T) *
+                            sum(CA,na.rm = T) + sum( VCA *VVN ,na.rm = T)) / 10^6  ,
+              RingWidth = RingArea / parameters$values[ parameters$parameter == "width"] * 1000,
+              CellLayer = max(cell_L,na.rm = T),
+              MeanVesselLumenArea = mean( VCV+0 ,na.rm = T ),
+              MaxVesselLumenArea = max( VCV+0 ,na.rm = T  ),
+              VesselNumber = sum(VVN,na.rm = T ),
+              CellNumber = mean( parameters$values[ parameters$parameter == "width"]  / CTD * CellLayer ,na.rm = T) + max(VNoV,na.rm = T) ,
+              VesselTotalLumenArea =  sum( VCV *VVN ,na.rm = T)/10^6,
+              VesselDensity = VesselNumber / RingArea,
+              RCTA = VesselTotalLumenArea / RingArea,
+              MeanDh = sum( (VCRD-2*VWT) ^5 ,na.rm = T ) / sum((VCRD-2*VWT)^4 ,na.rm = T )*10^-6, ##
+              # MeanKh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *sum( (VCRD-2*VWT)^4  ,na.rm = T  ) , ##
+              MeanKh = ( pi * 998.21)/(128*1.002*10^-9) * sum( (  (VCRD-2*VWT)*10^-6   )^4  ,na.rm = T  )   * VesselDensity *10^3 , ##
+              Ks = MeanKh/ (parameters$values[ parameters$parameter == "width"] * RingWidth),
+            ) ## end summarise -----
 
-        #dailyResult$doy[ dailyResult$doy == "Today"] <- Today
-
-        summaryDaily[paste0(Today)] <- list(dailyResult)
-
-
-
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 16 ] <- deltaD_T
+          RCTAt <- AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 3:15 ]$RCTA
+        } ## if nrow( dailyResult ) end----
 
       } ## if (actAccumulatedTem >= fixparam.divi$AT) end  可生长日期判定结束 -----------------
 
-      utils::setTxtProgressBar(pb = pb, value = Today)
-      # todayVessels <- xylogenesis[["vessels"]]
-      # todayFibers <- xylogenesis[["cells"]]
-      #
-      #
-      # colnames(todayVessels) <- paste("V", sep = "" , colnames(todayVessels) )
-      #
-      # dailyResult = left_join(todayFibers, todayVessels, by = c("Year" = "VYear", "cell_L" = "Vcell_L") )
-      #
-      # # dailyResult
-      # #%>% mutate(doy = "Today", .after = "Year")
-      #
-      # #dailyResult$doy[ dailyResult$doy == "Today"] <- Today
-      #
-      # finald[paste0(Today)] <- list(dailyResult)
-      #
-      # Today  = Today +1
-      # Today
+      # } ## Today sycle  end ------
+
+      ## 进度条结束
+
+      if (Pbar == T ) {
+        utils::setTxtProgressBar(pb = pb, value = Today)
+      }
+
 
     } ## today sycle end  每日生长计算结束 ------------------
 
     ## 这里需要对年结束进行汇总。
 
-    # colnames(xylogenesis[["vessels"]]) <- paste("V", sep = "" , colnames(xylogenesis[["vessels"]]) )
-    #
-    # final = left_join(xylogenesis[["cells"]], xylogenesis[["vessels"]], by = c("Year" = "VYear", "cell_L" = "Vcell_L") )
-    #
-    # orderd = c("Year","cell_L",
-    #            "CA" , "CRD","CTD", "CV" ,"CWT", "LWA", "DH", "MORK", "TDOY", "EDOY", "DDOY",
-    #            "VVN","VCA","VCRD","VCTD","VCV","VCWT","VLWA","VDH","VMORK","VEDOY","VTDOY","VDDOY")
-    #
-
-    dailyParameters <- rbind(dailyParameters,interimDailyParam)
-    if (intraannual == T) {
-      data.table::rbindlist(summaryDaily,use.names = T,fill = T,idcol = "doy") %>%
-        dplyr::select(c("Year","doy","cell_L",everything())) %>%
+    if (intraannual == T & writeRes == T) {
+      data.table::rbindlist(summaryDaily,use.names = T,fill = T,idcol = "doy") |>filter(  !is.na( EDOY)) |>
+        dplyr::select(c("Year","doy","cell_L",everything())) |>
         data.table::fwrite(paste0(redir,"/", as.character(years), ".csv" )   )
-    }
+    } ## if intraannual & writeRes  end -------
 
+    summaryYears[[as.character(years)]] <- summaryDaily[[growth.day]]
 
-    summaryYears[[as.character(years)]]  <- dailyResult %>%  dplyr::select(c("Year","cell_L",everything())) %>%
-      dplyr::mutate( VAs = CA_v *VN_v, CAs = parameters$values[ parameters$parameter == "width"]  / CTD * CA   )
+    if (Pbar == T ) {
+      close(con = pb)
+    } ## if Pbar end --------
 
-    summaryYears[[as.character(years)]]$VAs[ is.na(summaryYears[[as.character(years)]]$VAs) ] <-  0
-
-    summaryYears[[as.character(years)]] <- summaryYears[[as.character(years)]] %>%
-      dplyr::mutate( Raddist =  round(  (cumsum( VAs +  CAs ) - VAs -  CAs)/parameters$values[ parameters$parameter == "width"]   ,3  )    ) %>% select(-VAs,-CAs)
-
-    close(con = pb)
 
 
   }  ## year cycle end 年生长计算结束------------------
 
-  ## 合并所有结果
+  ## 合并所有结果;
 
-  summaryYears <- data.table::rbindlist(summaryYears)
-
-  parameters$values[ parameters$parameter == "width"]
-
-  annaulRing <-
-    summaryYears %>% dplyr::filter(Year >= syear) %>% dplyr::group_by(Year) %>% dplyr::summarise(
-    CellLayer = max(cell_L,na.rm = T),
-    CellNumber = mean( parameters$values[ parameters$parameter == "width"]  / CTD * CellLayer ,na.rm = T) +
-      max(NoV_v,na.rm = T) ,
-    RingWidth = (mean( parameters$values[ parameters$parameter == "width"] / CTD ,na.rm = T) *
-             sum(CA,na.rm = T) + sum(CA_v,na.rm = T)) /
-             parameters$values[ parameters$parameter == "width"] / 1000,
-    VesselNumber = max(NoV_v,na.rm = T ),
-    maxVA = max( CV_v,na.rm = T )
-
-  )
+  AnnualGrowth <- na.omit( AnnualGrowth ) #%>% as.data.table()
 
 
-  Outputs <- list(annaulRing, summaryYears , microclim, as.data.frame( stats::na.omit(dailyParameters) ) )
+  AnnaulRing <- AnnualGrowth |>
+    dplyr::group_by(Year) |>
+    dplyr::mutate( StartDoy = min(DOY),.before = DOY )|>
+    dplyr::filter(DOY == max(DOY)) |>
+    dplyr::rename(EndDoy = DOY)
 
-  names(Outputs) <- c('annaulRing','xylem_trait', 'microclim', 'dailyParameters' )
+  summaryYears <- data.table::rbindlist(summaryYears) |>filter( !is.na(EDOY) )
+
+  Outputs <- list(AnnaulRing, summaryYears , AnnualGrowth, microclim, as.data.frame( stats::na.omit(dailyParameters) ) )
+
+  names(Outputs) <- c('annaulRing','xylem_trait','AnnualGrowth', 'microclim', 'dailyParameters' )
 
 
-  openxlsx::write.xlsx(Outputs,paste0( redir, "/Outputs.xlsx" ) )
-
-  openxlsx::write.xlsx(parameters,file = paste0(redir,"/Parameters.xlsx" ))
 
 
-  print( redir)
+  resp <- list(parameters,age)
+  names(resp) <- c( 'parameters','age')
+
+  if (writeRes == T) {
+    openxlsx::write.xlsx(Outputs,paste0( redir, "/Outputs.xlsx" ) )
+    openxlsx::write.xlsx(resp,file = paste0(redir,"/Parameters.xlsx" ))
+    print( redir)
+
+  }
+
+
+
+
 
   return(Outputs)
 

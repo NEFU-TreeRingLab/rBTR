@@ -11,7 +11,8 @@ cell_division(
   fixparam.growth.vessel,
   dynparam.growth.t,
   cells,
-  vessels
+  vessels,
+  deltaD_T
 )
 }
 \arguments{

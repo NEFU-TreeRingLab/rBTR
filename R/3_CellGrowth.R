@@ -13,143 +13,109 @@
 cells_growth <- function( cell = GC, CorV = "C" , clim.today, layer.max,
                           fixparam.growth.fiber,fixparam.growth.vessel, dynparam.growth.t ){ ## function start
 
-    if(CorV == "C"){
+  if(CorV == "C"){
 
-      FGP = fixparam.growth.fiber
+    FGP <- fixparam.growth.fiber
 
-      vc = dynparam.growth.t$v_c.fiber
+    vc <- dynparam.growth.t$v_c.fiber
 
-      vw = dynparam.growth.t$v_w.fiber
+    vw <- dynparam.growth.t$v_w.fiber
 
-      vl = dynparam.growth.t$v_l.fiber
+    vl <- dynparam.growth.t$v_l.fiber
 
-    }else{
+  }else{
 
-      FGP = fixparam.growth.vessel
+    FGP <- fixparam.growth.vessel
 
-      vc = dynparam.growth.t$v_c.vessel
+    vc <- dynparam.growth.t$v_c.vessel
 
-      vw = dynparam.growth.t$v_w.vessel
+    vw <- dynparam.growth.t$v_w.vessel
 
-      vl = dynparam.growth.t$v_l.vessel
+    vl <- dynparam.growth.t$v_l.vessel
 
-    }
+  }
 
-  Death = rep(1,nrow(cell))
+  Death <- rep(1,nrow(cell))
 
   for(i in 1:10){
-### limit factor
+    ### limit factor
 
-## CAt max
-    CPeri = cell$WA/FGP$WTmin
+    ## CAt max
+    CPeri <- cell$WA/FGP$WTmin
 
-    if(CorV == "C"){
+    ifelse(CorV == "C",
+           CAtmax <- cell$CRD *(0.5*CPeri-cell$CRD) ,
+           CAtmax <- (0.25*CPeri)^2 )
 
-      CAtmax = cell$CRD *(0.5*CPeri-cell$CRD)
+    limitWTa <- cell$WT/FGP$WTa
+    limitWTa[ limitWTa>1 ] <- 1
 
-    } else {
+    ## Death
 
-      CAtmax = (0.25*CPeri)^2
-
-    }
-
-    limitWTa = cell$WT/FGP$WTa
-    limitWTa[ limitWTa>1 ] = 1
-
-## Death
-
-    Death[cell$DDOY != 0] = 0
+    Death[cell$DDOY != 0] <- 0
 
 
-## CA 细胞面积
+    ## CA 细胞面积
+
+    dCA_dt <- vc * cell$CA * ( 1 - cell$CA/FGP$CAmax ) * ( 1- limitWTa ) * Death
+
+    dCA_dt[dCA_dt < 0 ] <- 0 ## error catching
+
+    cell$TDOY[dCA_dt == 0 & cell$TDOY == 0 ] <- clim.today$DOY
+
+    dCA_dt[ cell$TDOY != 0 ] <- 0
+
+    ### WA 细胞壁面积
+
+    dWA_dt <- vw * ( 1 - cell$WA/FGP$WAmax ) * ( 1 - 1/( 1 + (cell$CA-cell$WA)/FGP$mw )^FGP$sw  ) * Death
+
+    dWA_dt[dWA_dt < 0 ] <- 0 ## error catching
+    dWA_dt[cell$WT >= FGP$WTmax ] <- 0 ## error catching
 
 
-
-    dCA_dt = vc * cell$CA * ( 1 - cell$CA/FGP$CAmax ) * ( 1- limitWTa ) * Death
-
-    dCA_dt[dCA_dt < 0 ] = 0 ## error catching
-
-    cell$TDOY[dCA_dt == 0 & cell$TDOY == 0 ] = clim.today$DOY
-
-    dCA_dt[ cell$TDOY != 0 ] = 0
-
-### WA 细胞壁面积
-
-    dWA_dt = vw * ( 1 - cell$WA/FGP$WAmax ) * ( 1 - 1/( 1 + (cell$CA-cell$WA)/FGP$mw )^FGP$sw  ) * Death
-
-    dWA_dt[dWA_dt < 0 ] = 0 ## error catching
-    dWA_dt[cell$WT >= FGP$WTmax ] = 0 ## error catching
-
-
-### LWA 细胞壁木质化量
+    ### LWA 细胞壁木质化量
     dLWA_dt <- vl *  ( 1- 1/( 1 + (cell$CA - cell$WA )/FGP$ml )^FGP$sl  )*Death
 
-    dLWA_dt[dLWA_dt > 0 &  dLWA_dt < 0.05 ] = 0.05 ## error catching
-    dLWA_dt[dLWA_dt < 0 ] = 0 ## error catching
-    dLWA_dt[cell$LWA >= cell$WA ] = 0 ## error catching
+    dLWA_dt[dLWA_dt > 0 &  dLWA_dt < 0.05 ] <- 0.05 ## error catching
+    dLWA_dt[dLWA_dt < 0 ] <- 0 ## error catching
+    dLWA_dt[cell$LWA >= cell$WA ] <- 0 ## error catching
 
 
-###  summary
+    ###  summary
     ##
-    dCW = cell$CA - cell$WA
+    dCW <- cell$CA - cell$WA
 
-    # li =  ( 1 - 1/( 1 + (cell$CA - cell$WA )/FGP$mw ) ^ FGP$sw )
-    # jl =  ( 1 - 1/( 1 + (cell$CA - cell$WA )/FGP$ml ) ^ FGP$sl )
-    ##
+    cell$CA <- cell$CA + dCA_dt
 
-
-    cell$CA = cell$CA + dCA_dt
-
-    cell$CA[cell$CA >= CAtmax] = CAtmax[cell$CA >= CAtmax] ## error catching
+    cell$CA[cell$CA >= CAtmax] <- CAtmax[cell$CA >= CAtmax] ## error catching
 
 
-    cell$WA =  cell$WA + dWA_dt
+    cell$WA <- cell$WA + dWA_dt
 
-    cell$WA[cell$WA > FGP$WAmax ] = FGP$WAmax ## error catching
-    cell$WA[cell$WA > cell$CA] = cell$CA[cell$WA > cell$CA] ## error catching
+    cell$WA[cell$WA > FGP$WAmax ] <- FGP$WAmax ## error catching
+    cell$WA[cell$WA > cell$CA] <- cell$CA[cell$WA > cell$CA] ## error catching
 
     cell$LWA <-  cell$LWA + dLWA_dt
 
-    cell$LWA[cell$LWA > cell$WA] = cell$WA[cell$LWA > cell$WA]
+    cell$LWA[cell$LWA > cell$WA] <- cell$WA[cell$LWA > cell$WA]
 
-## DDOY & TODY
+    ## DDOY & TODY
 
-    # cell$TDOY[dCA_dt == 0 & cell$TDOY == 0 ] = clim.today$DOY
+    cell$DDOY[cell$LWA >= cell$WA & cell$DDOY == 0 ] <- clim.today$DOY
 
-    cell$DDOY[cell$LWA >= cell$WA & cell$DDOY == 0 ] = clim.today$DOY
+    cell$TDOY[ cell$WA >= FGP$WAmax & cell$TDOY == 0 ] <- clim.today$DOY
 
-    cell$TDOY[ cell$WA >= FGP$WAmax & cell$TDOY == 0 ] = clim.today$DOY
+    cell$TDOY[ cell$WT >= FGP$WTmax & cell$TDOY == 0 ] <- clim.today$DOY
 
-    cell$TDOY[ cell$WT >= FGP$WTmax & cell$TDOY == 0 ] = clim.today$DOY
 
-    # cell$DDOY[cell$LWA < cell$WA & cell$DDOY == 0 & dLWA_dt == 0 ] = clim.today$DOY+9000
+    ## WT & CV & CRD 径向细胞大小
 
-## WT & CV & CRD 径向细胞大小
+    cell$CTD[CorV == "V"] <- floor(cell$CA ^ 0.5)
+    cell$CRD <- cell$CA/cell$CTD##
 
-    if(CorV == "C"){
+    cell$WT <- ( 2*(cell$CTD + cell$CRD) - (4*(cell$CTD + cell$CRD)^2 - 16 *cell$WA)^0.5) / 8
 
-      cell$CRD = cell$CA/cell$CTD
-
-    } else {
-
-      cell$CTD = floor(cell$CA ^ 0.5)
-      cell$CRD = cell$CA/cell$CTD
-
-    }
-
-    cell$WT = ( 2*(cell$CTD + cell$CRD) - (4*(cell$CTD + cell$CRD)^2 - 16 *cell$WA)^0.5) / 8
-
-    cell$CV = cell$CA - cell$WA
-
-    # if (nrow(cell) != 0 ) {
-    #   GD = data.frame(clim.today$Year,clim.today$DOY,cell$cell_L,i, CorV, dCW,vc , vw, vl ,
-    #                   cell$CA, cell$WA,cell$LWA, dCA_dt,jw, dWA_dt,jl,dLWA_dt,cell$WT)
-    #   for(j in 1: nrow(GD)){
-    #     cat( c( as.character(GD[j,] ),"\n") ,
-    #          file = paste0(redir,"/GD.csv") ,
-    #          sep = ",", fill = F,append = T)
-    #   }
-    # }
+    cell$CV <- cell$CA - cell$WA
 
     if ( all(cell$DDOY != 0 ) ) {
       break

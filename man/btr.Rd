@@ -4,18 +4,54 @@
 \alias{btr}
 \title{Main function calculate tree-ring anatomic}
 \usage{
-btr(clim, parameters, syear = NA, eyear = NA, intraannual = F)
+btr(
+  clim,
+  parameters,
+  age,
+  syear = NA,
+  eyear = NA,
+  writeRes = T,
+  intraannual = F,
+  gTmethod = "Jonhson",
+  division = "limit",
+  testLim = F,
+  CZgR = c(1, 0, 0, 1),
+  Pbar = F,
+  testMod = F,
+  Dcase = "min",
+  Named = NULL
+)
 }
 \arguments{
 \item{clim}{climate data must have Year，DOY，Temp ，Prec}
 
 \item{parameters}{model parameter date ，we ues a excel data to save it.}
 
+\item{age}{age trend of simulate ring}
+
 \item{syear}{modeling start year}
 
 \item{eyear}{modeling end year}
 
-\item{intraannual}{output daily result}
+\item{writeRes}{auto write res_data, logical value, if 'Ture', output result list as xlsx in file.}
+
+\item{intraannual}{output daily result, logical, if 'Ture', output daily result in file.}
+
+\item{gTmethod}{method of calculate gT ,'VS' and 'Jonhson et al.'
+\subsection{delete this part}{
+}}
+
+\item{division}{dealtDivision 'fix' is constant, 'limit' is gM/gV & RCTA control. ## cancel this part}
+
+\item{testLim}{use Lage limit mw & ml , Lage in age param_data, regulation cell enlargement by CAmax param .#'}
+
+\item{CZgR}{growth limit : climate-Cambial Cell, cell wall-gM, cell wall-gV, NewgRtype; 0 for False, 1 for True#'}
+
+\item{Pbar}{Whether to show progress bar}
+
+\item{testMod}{test Mode, logical, if 'False', Lage&Dage use ratio}
+
+\item{Dcase}{How to calculate Division Limit, including: "min","mean","multiply".}
 }
 \value{
 a excel data

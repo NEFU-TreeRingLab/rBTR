@@ -23,28 +23,28 @@
 #'
 #' @importFrom dplyr filter select mutate
 #' @importFrom tidyr spread
-#' @importFrom magrittr %>%
+
 #'
 #' @export
 
-Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
+Compute_clim <- function(climdata , parameters, syear = NA, eyear = NA ){
 
   #### form MainFun
   parameters$values <- as.numeric(parameters$values)
 
-  fixparam.Mclim <- dplyr::filter(parameters ,  modul == "microclim" & paramtype == "fixed") %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = parameter, value = values)
+  fixparam.Mclim <- dplyr::filter(parameters ,  modul == "microclim" & paramtype == "fixed") |>
+    dplyr::select( c("parameter","values") ) |> tidyr::spread( key = parameter, value = values)
 
-  dynparam.Mclim <- dplyr::filter(parameters ,  modul == "microclim" & paramtype == "dynamic") %>%
-    dplyr::select( c("parameter","values") ) %>% tidyr::spread( key = parameter, value = values)
+  dynparam.Mclim <- dplyr::filter(parameters ,  modul == "microclim" & paramtype == "dynamic") |>
+    dplyr::select( c("parameter","values") ) |> tidyr::spread( key = parameter, value = values)
 
   ## error-catching
-  if (is.na(syear) ) {syear = min(climdata$Year) } else {
+  if (is.na(syear) ) {syear <- min(climdata$Year) } else {
     if( syear < min(climdata$Year) ){
       stop("syear is wrong")}
   }
 
-  if (is.na(eyear)) {eyear = max(climdata$Year)} else {
+  if (is.na(eyear)) {eyear <- max(climdata$Year)} else {
     if( eyear > max(climdata$Year) ){
       stop("syear is wrong")
     }
@@ -66,17 +66,18 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
 
   gE <- Compute_gE(climdata, fixparam.Mclim, dynparam.Mclim,syear,eyear)##[,c(-1,-2)] ##syear, eyear,
+
   rootd <- Compute_rootd(climdata, fixparam.Mclim, dynparam.Mclim)
 
   data2 <- data.frame( gE,rootd )
 
 
+
   if (  all(names(climdata) != 'soilM') ) {
 
-
-  dailyPrec <- Compute_P(climdata, fixparam.Mclim, dynparam.Mclim,rootd)
-  data2 <- data.frame(gE,dailyPrec, rootd)
-  # rm("dailyPrec" , "rootd" , "gE")
+    dailyPrec <- Compute_P(climdata, fixparam.Mclim, dynparam.Mclim,rootd)
+    data2 <- data.frame(gE,dailyPrec, rootd)
+    # rm("dailyPrec" , "rootd" , "gE")
 
     for (y in syear:eyear) {  ## 按年拆分数据循环
       ydata <- dplyr::filter(data2, Year == y )
@@ -86,7 +87,7 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
       # attach(ydata$)
 
-      if(dynparam.Mclim$M0 < 0 ){ dynparam.Mclim$M0 = 300 / fixparam.Mclim$rootd0} #核对并修正初始值
+      if(dynparam.Mclim$M0 < 0 ){ dynparam.Mclim$M0 <- 300 / fixparam.Mclim$rootd0} #核对并修正初始值
 
       for (day in 1: nrow(ydata)) {
 
@@ -97,7 +98,7 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
           I <- mean(istar,na.rm=T)
           ap <- (6.75e-7) * I ^ 3 - (7.71e-5) * I ^ 2 + (1.79e-2) * I + 0.49
 
-          if (ydata$TEM[day] <= 0){Ep = 0}
+          if (ydata$TEM[day] <= 0){Ep <- 0}
           if (ydata$TEM[day] > 0 && ydata$TEM[day] < 26.5){Ep <- 16 * ydata$Ls[day] * (10 * ydata$TEM[day] / I) ^ ap}
           if (ydata$TEM[day] >= 26.5){Ep <-  -415.85 + 32.25*ydata$TEM[day] - 0.43* ydata$TEM[day]^2}
           Ep  <-  Ep/30.5
@@ -165,7 +166,7 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
 
 
-    data2 <- cbind(data2,summaryMicroClim) #%>% select(c("Year", "Month","Day","DOY","gE","gT","gM","soilM","TEM","Ls","dailyPrec"))
+    data2 <- cbind(data2,summaryMicroClim) #|> select(c("Year", "Month","Day","DOY","gE","gT","gM","soilM","TEM","Ls","dailyPrec"))
 
   } ## end if any soilM
   # detach(fixparam.Mclim)
@@ -176,6 +177,8 @@ Compute_clim = function(climdata , parameters, syear = NA, eyear = NA ){
 
   if (all(names(climdata) != 'VPD')) {
     Microclim <- dplyr::mutate(Microclim,VPD = 0.61078*exp(17.27*TEM/(TEM+237.3))*(1-RH))
+    Microclim$VPD[  Microclim$TEM <= 0 ] <- 0
+
   }## if any VPD
 
 
@@ -212,8 +215,8 @@ compute_daylengthfactor <-function( fixparam.Mclim, dynparam.Mclim ){  ## daylen
       0.000719 * cos(2 * theta_0) + 0.000077 * sin(2 * theta_0)
     #赤纬/太阳偏角(180/pi)*
     delta  <-  (0.006918-0.399912 * cos(theta_0) + 0.070257 * sin(theta_0) -
-               0.006758 * cos(2 * theta_0) + 0.000970 * sin(2 * theta_0)-
-               0.002697 * cos(3 * theta_0) + 0.000148 * sin(3 * theta_0))
+                  0.006758 * cos(2 * theta_0) + 0.000970 * sin(2 * theta_0)-
+                  0.002697 * cos(3 * theta_0) + 0.000148 * sin(3 * theta_0))
     #时角
     omega_0  <-  acos(-tan(lat) * tan(delta))
     #最大日照时数
@@ -221,7 +224,7 @@ compute_daylengthfactor <-function( fixparam.Mclim, dynparam.Mclim ){  ## daylen
     L  <-  N / 12
     #逐日天文辐射量
     s_0  <-  ((I_0) / pi) * rho_2 * (omega_0 * sin(lat) * sin(delta) +
-                                    cos(lat) * cos(delta) * sin(omega_0))
+                                       cos(lat) * cos(delta) * sin(omega_0))
     #日照百分率
     if (is.na(fixparam.Mclim$n) == F ) {
       dynparam.Mclim$s  <-  n / N
@@ -264,10 +267,10 @@ compute_daylengthfactor <-function( fixparam.Mclim, dynparam.Mclim ){  ## daylen
 
 Compute_gE <- function(climdata, fixparam.Mclim, dynparam.Mclim, syear,eyear ){  ## gE start
 
-  basedata  <-  compute_daylengthfactor( fixparam.Mclim, dynparam.Mclim ) %>% data.frame() %>% tibble::rownames_to_column("DOY")
+  basedata  <-  compute_daylengthfactor( fixparam.Mclim, dynparam.Mclim ) |> data.frame() |> tibble::rownames_to_column("DOY")
   basedata$DOY <- as.numeric(basedata$DOY )
-  d365  <-  basedata[,c(1,2,4)] %>% dplyr::rename(gE = `gE365`, Ls = `L365`)
-  d366  <-  basedata[,c(1,3,5)] %>% dplyr::rename(gE = `gE366`, Ls = `L366`)
+  d365  <-  basedata[,c(1,2,4)] |> dplyr::rename(gE = `gE365`, Ls = `L365`)
+  d366  <-  basedata[,c(1,3,5)] |> dplyr::rename(gE = `gE366`, Ls = `L366`)
 
   dclim <- base::split(climdata,climdata$Year)
 
@@ -302,7 +305,7 @@ Compute_rootd  <-  function(climdata, fixparam.Mclim, dynparam.Mclim ){
   dep  <-  matrix(NA, len, 1)##生成数据集
   ####
   for (t in 2:len) {
-  # for (t in 1:len) {
+    # for (t in 1:len) {
     ###判断土壤状态
     if (dynparam.Mclim$Soil_melt_switch == 1 ) {
       dep[t]  <-  fixparam.Mclim$rootd0
