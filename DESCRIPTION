@@ -14,7 +14,7 @@ Description: A new process-based model of xylem formation and ring growth, which
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 Imports: 
     data.table,
     dplyr,

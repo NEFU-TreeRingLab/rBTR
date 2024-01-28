@@ -12,6 +12,7 @@ cell_division(
   dynparam.growth.t,
   cells,
   vessels,
+  CZgR,
   deltaD_T
 )
 }

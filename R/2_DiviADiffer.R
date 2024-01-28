@@ -16,7 +16,7 @@
 
 cell_division <- function( clim.today,
                            fixparam.divi,fixparam.growth.fiber,fixparam.growth.vessel,
-                           dynparam.growth.t, cells, vessels, deltaD_T){   ## Fixp_cambi,, TA
+                           dynparam.growth.t, cells, vessels,CZgR, deltaD_T){   ## Fixp_cambi,, TA
 
   egR <- clim.today$gE* clim.today$gT* min(  clim.today$gM, clim.today$gV)  ## Vessels growth rate
   wgR <- clim.today$gE* clim.today$gT    ##       ## fiber  growth rate

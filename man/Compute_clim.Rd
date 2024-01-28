@@ -17,11 +17,8 @@ Compute_clim(climdata, parameters, syear = NA, eyear = NA)
 }
 \value{
 gE , SoilM soil moisture, Ls, potEv et.al. climate factor
-\subsection{SoilM soil moisture computed via the CPC Leaky Bucket model (in v/v, 12 x Nyrs)}{
-}
-
-\subsection{potEv Potential evapotranspiration computed via Thornthwaite's 1947 scheme (in mm).}{
-}
+SoilM soil moisture computed via the CPC Leaky Bucket model (in v/v, 12 x Nyrs)
+potEv Potential evapotranspiration computed via Thornthwaite's 1947 scheme (in mm).
 }
 \description{
 #' \code{leakybucket.submonthly} simulates soil moisture with submonthly time step.

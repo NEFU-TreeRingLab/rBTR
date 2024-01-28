@@ -38,8 +38,8 @@ btr(
 \item{intraannual}{output daily result, logical, if 'Ture', output daily result in file.}
 
 \item{gTmethod}{method of calculate gT ,'VS' and 'Jonhson et al.'
-\subsection{delete this part}{
-}}
+
+delete this part}
 
 \item{division}{dealtDivision 'fix' is constant, 'limit' is gM/gV & RCTA control. ## cancel this part}
 

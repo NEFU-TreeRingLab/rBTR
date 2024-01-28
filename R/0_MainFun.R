@@ -13,7 +13,7 @@
 #' @param intraannual output daily result, logical, if 'Ture', output daily result in file.
 #' @param gTmethod method of calculate gT ,'VS' and 'Jonhson et al.'
 #'
-#' ### delete this part
+#' delete this part
 #' @param division dealtDivision 'fix' is constant, 'limit' is gM/gV & RCTA control. ## cancel this part
 #' @param testLim use Lage limit mw & ml , Lage in age param_data, regulation cell enlargement by CAmax param .#'
 #' @param CZgR growth limit : climate-Cambial Cell, cell wall-gM, cell wall-gV, NewgRtype; 0 for False, 1 for True#'
