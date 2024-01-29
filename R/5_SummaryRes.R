@@ -10,25 +10,32 @@
 #' @export
 
 nor <- function( dat,TPH = F ,ROU = F,min1 = F, Zeros = F ){
-  a <- 0
-  if (min1 == T) {
-    a <- 0.01
-  }
 
-  dat <- as.numeric(dat)
 
-  mind <- min(dat,na.rm = T)
-  mind[Zeros == T]  <- 0
 
-  nordat <- (dat-mind +a)/(max(dat,na.rm =T) - mind +a)
+  if ( min( dat ) == min( dat)  ) { ### error catch
+    nordat <- rep(1, length(dat ))
+  } else {
 
-  if (TPH == T) {
-    nordat <- nordat * 100
-  }
-  if (ROU == T) {
-    nordat <- round(nordat,2)
-  }
+    a <- 0
+    if (min1 == T) {
+      a <- 0.01
+    }
 
+    dat <- as.numeric(dat)
+
+    mind <- min(dat,na.rm = T)
+    mind[Zeros == T]  <- 0
+
+    nordat <- (dat-mind +a)/(max(dat,na.rm =T) - mind +a)
+
+    if (TPH == T) {
+      nordat <- nordat * 100
+    }
+    if (ROU == T) {
+      nordat <- round(nordat,2)
+    }
+ } ## error catch end ---
   return(nordat)
 } ## nor end -------
 
@@ -38,6 +45,8 @@ nor <- function( dat,TPH = F ,ROU = F,min1 = F, Zeros = F ){
 #' @param y_actual Observes data
 #' @param y_predicted Simulates data
 #' @param method cor.test method
+#'
+#' @importFrom stats cor.test
 #'
 #' @return test result
 #' @export

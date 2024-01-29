@@ -32,6 +32,7 @@
 #' @importFrom data.table rbindlist fwrite as.data.table
 #' @importFrom openxlsx write.xlsx
 #' @importFrom stats na.omit
+#' @importFrom purrr map map2
 #'
 #'
 #' @export
@@ -139,22 +140,26 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                                  'L_i.fiber',	'L_i.vessel',	'SumCL',	'SumV',	'SumVL',	'T_age',
                                  'v_c.fiber',	'v_c.vessel',	'v_l.fiber',	'v_l.vessel',	'v_w.fiber',	'v_w.vessel',	'Vcz')
 
-  prow <- ceiling( 10/log( 2, (age$Tage * fixparam.divi$va_cz + 1) ))*
-    microclim[ gT > 0,.(x = max(DOY) - min(DOY)) ,by = Year ][,x]
+  # prow <- ceiling( 10/log( 2, (age$Tage * fixparam.divi$va_cz + 1) ))*
+  #                microclim[ gT > 0,.(x = max(DOY) - min(DOY)) ,by = Year ][,x]  ###
+  prow <- rep( 366, (eyear - syear+1) )
+
 
   summaryYears <- purrr::map2( seq(syear,eyear,1) , prow ,
                                function( x ,prow){ c <- data.frame( seq(1: prow) , rep( x,prow  ),matrix(nrow =prow,ncol = 27   ) )
                                colnames(c) <- c( colnames(cells), paste0("V", colnames(vessels[,-1:-2])) ,
                                                  "VAs" , "CAs" ,"Dh" ,"Kh","Raddist"   )
                                return( c ) }  )
+
   names( summaryYears ) <- as.character( syear:eyear )
 
   ## summary data.table
-  AnnualGrowth <- matrix(nrow = (eyear - syear +1) *366, ncol= 16   ) |> as.data.frame()
+  AnnualGrowth <- matrix(nrow = (eyear - syear +1) *366, ncol= 22   ) |> as.data.frame()  ## 16 - 22
 
   colnames(AnnualGrowth ) <- c( 'Year' ,'DOY' , 'RingArea' ,'RingWidth' ,'CellLayer' ,
                                 'MeanVesselLumenArea' , 'MaxesselLumenArea', 'VesselNumber' ,'CellNumber' , 'VesselTotalLumenArea',
-                                'VesselDensity', 'RCTA', 'MeanDh' , 'MeanKh' ,'Ks','dD' )
+                                'VesselDensity', 'RCTA', 'MeanDh' , 'MeanKh' ,'Ks','dD', ## 1:16 old part
+                                "fiberInE", "fiberInT","fiberMature", "rwInE", "rwInT","rwMature" ) ## +6 new part
 
 
   AnnualGrowth$Year <- rep( syear:eyear,each =366  )
@@ -226,7 +231,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
         ## Division period start
         climateDivLim  <- fixparam.divi$a1 * min(clim.today$gM ,clim.today$gV )
 
-        rctaDivLim <- fixparam.divi$a2 *RCTAt/RCTA[ Today ]
+        rctaDivLim <- fixparam.divi$a2 *RCTAt / RCTA[ Today ]
         rctaDivLim[ RCTA[ Today ]  == 99 ] <- climateDivLim ## ERROR CATCH
 
         Div_limit <- min(climateDivLim,rctaDivLim)
@@ -247,7 +252,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
         dynparam.growth.t <- newCells[[3]]
 
-        dailyParameters[ dailyParameters$years == syear & dailyParameters$Today == Today , ] <-  c(years,Today,dynparam.growth.t)
+        dailyParameters[ dailyParameters$years == years & dailyParameters$Today == Today , ] <-  c(years,Today,dynparam.growth.t)
         ##
 
         Xy.fiber[ Xy.fiber$cell_L %in% newCells[[1]]$cell_L,  ] <- newCells[[1]]
@@ -324,6 +329,23 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
             ) ## end summarise -----
 
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 16 ] <- deltaD_T
+
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 22 ] <-
+            max( daily.t$Raddist[ daily.t$DDOY != 0 ]) ##RW mature fiber
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 21 ] <-
+            max( daily.t$Raddist[ daily.t$TDOY != 0 ]) - max( daily.t$Raddist[ daily.t$DDOY != 0 ]) ##RW Thickness fiber
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 20 ] <-
+            AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 4 ] -
+            max( daily.t$Raddist[ daily.t$TDOY != 0 ])/1000 ##RW Enlargement fiber
+
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 19 ] <-
+            max( daily.t$cell_L[ daily.t$DDOY != 0 ]) ##cell_L mature fiber
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 18 ] <-
+            max( daily.t$cell_L[ daily.t$TDOY != 0 ]) - max( daily.t$cell_L[ daily.t$DDOY != 0 ]) ##cell_L Thickness fiber
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 17 ] <-
+            AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 5 ] -
+            max( daily.t$cell_L[ daily.t$TDOY != 0 ]) ##cell_L Enlargement fiber
+
           RCTAt <- AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 3:15 ]$RCTA
         } ## if nrow( dailyResult ) end----
 
@@ -363,7 +385,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   AnnualGrowth <- na.omit( AnnualGrowth ) #%>% as.data.table()
 
 
-  AnnaulRing <- AnnualGrowth |>
+  AnnaulRing <- AnnualGrowth[,c(1:16)] |>
     dplyr::group_by(Year) |>
     dplyr::mutate( StartDoy = min(DOY),.before = DOY )|>
     dplyr::filter(DOY == max(DOY)) |>
