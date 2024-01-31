@@ -13,7 +13,7 @@ nor <- function( dat,TPH = F ,ROU = F,min1 = F, Zeros = F ){
 
 
 
-  if ( min( dat ) == min( dat)  ) { ### error catch
+  if ( min( dat ) == max( dat)  ) { ### error catch
     nordat <- rep(1, length(dat ))
   } else {
 

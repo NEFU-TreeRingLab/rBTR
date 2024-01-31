@@ -108,6 +108,11 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   fixparam.growth.origin <- parameters[parameters$paramtype == "fixed",
                                        c("parameter","modul", "values")]
 
+  #### VA & Differentiation
+  MaxVesselArea <- fixparam.growth.vessel$CAmax
+  MaxdeltaD <- fixparam.divi$deltaD
+  #### VA & Differentiation ---
+
   ## 年循环计算
   ## RCTA line
 
@@ -190,11 +195,16 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
         fixparam.divi$deltaD         <- gR.year$Dage[1]
 
       }else{
-        fixparam.growth.vessel$CAmax <- gR.year$Lage[1] *
-          fixparam.growth.origin$values[fixparam.growth.origin$parameter == "CAmax" & fixparam.growth.origin$modul == "growthV" ]
-        fixparam.divi$deltaD <- gR.year$Dage[1] *
-          fixparam.growth.origin$values[fixparam.growth.origin$parameter == "deltaD" & fixparam.growth.origin$modul =="division" ]
-      }
+
+        fixparam.growth.vessel$CAmax <- MaxVesselArea * gR.year$Lage[1]
+        fixparam.divi$deltaD <- MaxdeltaD * gR.year$Dage[1]
+
+        ## old type
+        # fixparam.growth.vessel$CAmax <- gR.year$Lage[1] *
+          # fixparam.growth.origin$values[fixparam.growth.origin$parameter == "CAmax" & fixparam.growth.origin$modul == "growthV" ]
+        # fixparam.divi$deltaD <- gR.year$Dage[1] *
+          # fixparam.growth.origin$values[fixparam.growth.origin$parameter == "deltaD" & fixparam.growth.origin$modul =="division" ]
+      } ## test mod end ---
 
     }
 
