@@ -229,6 +229,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                                 return( c ) } ,prow[years - syear+1]  )
 
     for ( Today in 1:nrow(gR.year) ) { ## daily sycle start
+    # for ( Today in 1:112 ) {
 
       clim.today <- gR.year[Today,]
 
@@ -319,7 +320,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
           daily.t <- summaryDaily[[Today]]
 
           daily.t$VCV[daily.t$VDDOY == 0 ] <- 0
-          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 3:15 ] <-  daily.t   |> ## 筛选成熟细胞
+          AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 3:15 ] <-  daily.t   |> ## 全细胞 --筛选成熟细胞--
             dplyr::summarise(
               RingArea = (mean( parameters$values[ parameters$parameter == "width"] / CTD ,na.rm = T) *
                             sum(CA,na.rm = T) + sum( VCA *VVN ,na.rm = T)) / 10^6  ,
@@ -341,20 +342,20 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 16 ] <- deltaD_T
 
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 22 ] <-
-            max( daily.t$Raddist[ daily.t$DDOY != 0 ]) ##RW mature fiber
+            max( daily.t$Raddist[ daily.t$DDOY != 0 ],0) ##RW mature fiber
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 21 ] <-
-            max( daily.t$Raddist[ daily.t$TDOY != 0 ]) - max( daily.t$Raddist[ daily.t$DDOY != 0 ]) ##RW Thickness fiber
+            max( daily.t$Raddist[ daily.t$TDOY != 0 ],0) - max( daily.t$Raddist[ daily.t$DDOY != 0 ],0) ##RW Thickness fiber
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 20 ] <-
-            AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 4 ] -
-            max( daily.t$Raddist[ daily.t$TDOY != 0 ])/1000 ##RW Enlargement fiber
+            AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 4 ]*1000 -
+            max( daily.t$Raddist[ daily.t$TDOY != 0 ],0) ##RW Enlargement fiber
 
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 19 ] <-
-            max( daily.t$cell_L[ daily.t$DDOY != 0 ]) ##cell_L mature fiber
+            max( daily.t$cell_L[ daily.t$DDOY != 0 ],0) ##cell_L mature fiber
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 18 ] <-
-            max( daily.t$cell_L[ daily.t$TDOY != 0 ]) - max( daily.t$cell_L[ daily.t$DDOY != 0 ]) ##cell_L Thickness fiber
+            max( daily.t$cell_L[ daily.t$TDOY != 0 ],0) - max( daily.t$cell_L[ daily.t$DDOY != 0 ],0) ##cell_L Thickness fiber
           AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 17 ] <-
             AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 5 ] -
-            max( daily.t$cell_L[ daily.t$TDOY != 0 ]) ##cell_L Enlargement fiber
+            max( daily.t$cell_L[ daily.t$TDOY != 0 ],0) ##cell_L Enlargement fiber
 
           RCTAt <- AnnualGrowth[ AnnualGrowth$Year == years & AnnualGrowth$DOY == Today, 3:15 ]$RCTA
         } ## if nrow( dailyResult ) end----
