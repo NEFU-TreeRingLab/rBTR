@@ -2,6 +2,8 @@
 
 #' Computer gM & gT & gP
 #'
+#' @export
+#'
 #' @param clim climates about Temperature & Soil Moisture
 #' @param growth_Param parameters of climates model
 #'
@@ -77,6 +79,8 @@ Compute_gR <- function( clim , growth_Param){
 ### gM 与gT计算 -------------------------------------
 
 #' Computer gM & gT & gP
+#'
+#' @export
 #'
 #' @param clim climates about Temperature & Soil Moisture
 #' @param growth_Param parameters of climates model

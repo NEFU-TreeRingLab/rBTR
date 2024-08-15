@@ -5,10 +5,9 @@
 \title{cells_growth function}
 \usage{
 cells_growth(
-  cell = GC,
+  cell,
   CorV = "C",
   clim.today,
-  layer.max,
   fixparam.growth.fiber,
   fixparam.growth.vessel,
   dynparam.growth.t
@@ -21,13 +20,13 @@ cells_growth(
 
 \item{clim.today}{Today climate data}
 
-\item{layer.max}{max layer in grwoth area}
-
 \item{fixparam.growth.fiber}{Fix parameters}
 
 \item{fixparam.growth.vessel}{Fix parameters}
 
 \item{dynparam.growth.t}{Dynamic parameters}
+
+\item{layer.max}{max layer in grwoth area ## Del}
 }
 \value{
 today cells anatomy

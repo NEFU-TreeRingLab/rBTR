@@ -30,6 +30,8 @@ cell_division(
 \item{cells}{cells anatomy}
 
 \item{vessels}{vessels anatomy}
+
+\item{CZgR}{if climate limited Cambial cell growth}
 }
 \value{
 today cells layer number & vessels number

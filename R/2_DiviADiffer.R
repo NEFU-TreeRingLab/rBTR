@@ -8,18 +8,41 @@
 #' @param dynparam.growth.t Dynamic parameters
 #' @param cells cells anatomy
 #' @param vessels vessels anatomy
+#' @param CZgR if climate limited Cambial cell growth
 #'
 #' @return today cells layer number & vessels number
+#'
+## #' @export
 #'
 #' @importFrom dplyr bind_rows
 #'
 
 cell_division <- function( clim.today,
                            fixparam.divi,fixparam.growth.fiber,fixparam.growth.vessel,
-                           dynparam.growth.t, cells, vessels,CZgR, deltaD_T){   ## Fixp_cambi,, TA
+                           dynparam.growth.t, cells, vessels, CZgR ,deltaD_T){   ## Fixp_cambi,, TA
+
+
+
+  wgM <- clim.today$gM
+  wgV <- clim.today$gV
+  ## gM liner or Π shape
+  if ( any( colnames(clim.today) == 'Eage' )  ) {
+
+    wgM[clim.today$Eage != 0 ]  <- ( 1 / log( clim.today$Eage + 1 ) )  *
+      log( clim.today$Eage * clim.today$gM + 1 )
+  }
+
+  wgM[CZgR[2] == 0] <- 1
+  wgV[CZgR[3] == 0] <- 1
 
   egR <- clim.today$gE* clim.today$gT* min(  clim.today$gM, clim.today$gV)  ## Vessels growth rate
-  wgR <- clim.today$gE* clim.today$gT    ##       ## fiber  growth rate
+  wgR <- clim.today$gE* clim.today$gT* min(  wgM , wgV )    ##       ## fiber  growth rate
+
+  if ( CZgR[4] == 0 ) {
+    egR <- clim.today$gE* min( clim.today$gT, clim.today$gM, clim.today$gV)  ## Vessels growth rate
+    wgR <- clim.today$gE* min( clim.today$gT, wgM , wgV )    ##       ## fiber  growth rate
+  }
+
 
   ## error catch
   dynparam.growth.t$grwothSeason[egR <= 0.05 & clim.today$DOY > 200 ] <- 1 ##
@@ -89,69 +112,33 @@ cell_division <- function( clim.today,
 
   dynparam.growth.t$dCA_cz <- CA_cz
 
-  Ct <- cells[-1,] # 生成空白矩阵
-  Vt <- vessels[-1,]
+  # Ct <- cells[-1,] # 生成空白矩阵
+  # Vt <- vessels[-1,]
   Nv <- 0
 
   if (Layers > 0 ) { ## 判读是否分裂
 
-    for (i in 1 : Layers ) { ## 分裂便计算分化
-      ## 1，细胞层数+1
-      dynparam.growth.t$SumCL <- dynparam.growth.t$SumCL +1
-      cells$Year <- clim.today$Year
-      cells$cell_L <- dynparam.growth.t$SumCL
-      cells$EDOY <- clim.today$DOY
+    Ct <- seq( dynparam.growth.t$SumCL+1 , dynparam.growth.t$SumCL + Layers , 1  )
+    dynparam.growth.t$SumCL <- max(Ct)
 
-      Ct <- dplyr::bind_rows(Ct , cells)
-      ## 1 end
+    if (deltaD_T != 0) { #### 分化
+      Vt_t <- seq( dynparam.growth.t$deltaVN + 1 ,  dynparam.growth.t$deltaVN + Layers,1   )
+      Vt_t2 <-  Vt_t %/% deltaD_T - c( 0,Vt_t %/% deltaD_T ) [-(length(Vt_t)+1)]
+      ifelse( Ct[1] == 1, Vt_t2[1] <-  Vt_t2[1] + 1 ,NA  )
 
+      Vt <- Ct[ Vt_t2 !=0 ]
+      Vn <- Vt_t2[ Vt_t2 !=0 ]
+      dynparam.growth.t$deltaVN <- max(Vt_t) %% deltaD_T
+      dynparam.growth.t$SumV <- dynparam.growth.t$SumV + sum(Vt_t2)
 
-      if (deltaD_T != 0) { #### 分化
-        ## 2, 计算分化
-        # 分裂间期（层数计）+1
+    }
 
-        dynparam.growth.t$deltaVN <- dynparam.growth.t$deltaVN + 1
+    ##
 
-        # 计算该间期下分裂的层数
-        Nv <- dynparam.growth.t$deltaVN %/% deltaD_T
-
-        # 计算新间期
-        dynparam.growth.t$deltaVN <- dynparam.growth.t$deltaVN %% deltaD_T
-
-        # 每年首次分裂产生至少1个导管
-
-        Nv[dynparam.growth.t$SumV == 0 & dynparam.growth.t$v_c.vessel != 0 & Nv == 0] <- 1
-
-        dynparam.growth.t$SumV <- dynparam.growth.t$SumV + Nv ## 总导管数增加
-
-        if (Nv != 0) { ## 判断分化导管数量
-
-          vessels$Year <- clim.today$Year
-          vessels$cell_L <- cells$cell_L
-          vessels$EDOY <- clim.today$DOY
-          vessels$VN <- Nv
-          # dynparam.growth.t$SumV <- dynparam.growth.t$SumV + Nv
-          vessels$NoV <- dynparam.growth.t$SumV
-          Vt <- dplyr::bind_rows(Vt , vessels)
-
-        }else{
-          Vt[i,] <- NA
-        }
-        ## 导管生长判断结束
-
-      }#### end if 分化
-
-
-
-    } ## 每层生长结束 end for i -------
-    ###
-
-    Today_G <- list(Ct,Vt,dynparam.growth.t)
+    Today_G <- list(Ct = Ct ,Vt = Vt , Vn = Vn ,dynparam.growth.t)
 
   }else{
-    Ct[1,] <- NA
-    Vt[1,] <- NA
-    Today_G <- list(Ct,Vt,dynparam.growth.t)
+    Today_G <- list(Ct = 0 ,Vt = 0 , Vn = 0 ,dynparam.growth.t)
   } ## 层生长结束
 
 
