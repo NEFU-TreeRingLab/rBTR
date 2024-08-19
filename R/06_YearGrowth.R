@@ -28,7 +28,7 @@
 #' @param fixparam.growth.fiber Fix parameters of fiber cells
 #' @param fixparam.growth.vessel Fix parameters
 #'
-#' @importFrom dplyr filter select select left_join bind_rows summarise
+#' @importFrom dplyr filter select select left_join bind_rows summarise mutate
 #' @importFrom magrittr %>%
 #' @importFrom data.table rbindlist fwrite as.data.table
 #' @importFrom openxlsx write.xlsx
@@ -257,8 +257,13 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
   #   summaryYears <- summaryDaily[[growth.day]]
   dailyParameters$years <- years
 
+  summaryYears <- summaryDaily[[growth.day]] |> dplyr::mutate(VNoV = cumsum(VVN))
+  summaryYears[ summaryYears == 0  ] <- NA
+  summaryYears$Raddist[ is.na(summaryYears$Raddist )  ] <- 0 ###ERROR CATCH
+  # summaryYears$VNoV[summaryYears$VCA == 0 ] <- 0
+
   res <- list(
-    summaryYears = summaryDaily[[growth.day]] , ## 年轮细胞表
+    summaryYears = summaryYears, ## 年轮细胞表
     AnnualGrowth = AnnualGrowth[ !is.na(AnnualGrowth$RingArea ), ] , ## 年内生长汇总
     dailyParameters = dailyParameters[ !is.na( dailyParameters$czgR),  ]
   )
