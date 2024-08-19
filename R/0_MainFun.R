@@ -222,11 +222,16 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
   summaryYears <- data.table::rbindlist(Cells)
 
+  summaryYears[ summaryYears == 0  ] <- NA
+  summaryYears$Raddist[ is.na(summaryYears$Raddist )  ] <- 0 ###ERROR CATCH
+
   dailyParameters <- data.table::rbindlist(dailyParam) %>% mutate(Age = years - min(years)+Age )
 
   Outputs <- list(annaulRing = AnnaulRing,
                   xylem_trait = summaryYears , IntraAnnualGrowth = IntraAnnual,
-                  microclim = microclim, dailyParameters =  dailyParameters )
+                  microclim = microclim, dailyParameters =  dailyParameters ) |> dev.outputs()
+
+
 
   resp <- list(parameters = parameters,age = age)
 
@@ -438,7 +443,7 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
   summaryYears <- data.table::rbindlist(Cells) |> dplyr::select(-VNoV)
 
   summaryYears[ summaryYears == 0  ] <- NA
-
+  summaryYears$Raddist[ is.na(summaryYears$Raddist )  ] <- 0 ###ERROR CATCH
 
   dailyParameters <- data.table::rbindlist(dailyParam)
 
