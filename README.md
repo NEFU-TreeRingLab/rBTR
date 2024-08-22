@@ -21,4 +21,8 @@ You can install the development version of BTR model like so:
 ```
 ## Note
 
-We made major changes to the model code in February 2024. The previous examples are no longer applicable. We will edit new examples as soon as possible.
+Now rBTR can utilize multi-core parallel computing. 
+
+```r
+rBTR::btr_parallel( clims, param ,age, Cores = 12 ) 
+```
