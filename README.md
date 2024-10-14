@@ -6,11 +6,7 @@
 
 <!-- badges: end -->
 
-**This is the Beta version of BTR model**
-
 rBTR is an Rpackage of the Broadleaved Tree-Ring (BTR) model. 
-
-
 
 ## Installation
 
