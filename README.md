@@ -17,7 +17,7 @@ rBTR is an Rpackage of the Broadleaved Tree-Ring (BTR) model.
 You can install the development version of BTR model like so:
 
 ```r
-# devtools::install_github("kdoodk/rBTR")
+# devtools::install_github("NEFU-TreeRingLab/rBTR")
 ```
 ## Note
 
