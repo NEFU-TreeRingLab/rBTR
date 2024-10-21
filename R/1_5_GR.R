@@ -14,8 +14,8 @@
 
 Compute_gR <- function( clim , growth_Param){
 
-  growthParam <-growth_Param |> dplyr::select(c("parameter","values")) |>
-    tidyr::spread(key = parameter, value = values)
+  growthParam <-growth_Param |> dplyr::select(c("Parameter","Values")) |>
+    tidyr::spread(key = Parameter, value = Values)
 
   ### gT
 
@@ -91,8 +91,8 @@ Compute_gR <- function( clim , growth_Param){
 #' @return gM & gT
 Compute_gR2 <- function( clim , growth_Param){
 
-  growthParam <-growth_Param |> dplyr::select(c("parameter","values")) |>
-    tidyr::spread(key = parameter, value = values)
+  growthParam <-growth_Param |> dplyr::select(c("Parameter","Values")) |>
+    tidyr::spread(key = Parameter, value = Values)
 
   ### gT
 

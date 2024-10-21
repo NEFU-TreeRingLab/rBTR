@@ -10,7 +10,7 @@ btr(
   age,
   syear = NA,
   eyear = NA,
-  writeRes = T,
+  writeRes = F,
   intraannual = F,
   gTmethod = "Jonhson",
   division = "limit",

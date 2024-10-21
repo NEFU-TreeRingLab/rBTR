@@ -19,21 +19,21 @@ cells_growth <- function( cell , CorV = "C" , clim.today, # layer.max,
 
     FGP <- fixparam.growth.fiber
 
-    vc <- dynparam.growth.t$v_c.fiber
+    dynparam.growth.t$v_c.fiber <- vc <- FGP$va_c.fiber * dynparam.growth.t$egR # ( wgR^(1 + dynparam.growth.t$L_just) )
 
-    vw <- dynparam.growth.t$v_w.fiber
+    vw <- dynparam.growth.t$v_w.fiber <- FGP$va_w.fiber * dynparam.growth.t$wgR * (1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
 
-    vl <- dynparam.growth.t$v_l.fiber
+    vl <- dynparam.growth.t$v_l.fiber <- FGP$va_l.fiber * dynparam.growth.t$wgR * (1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
 
   }else{
 
     FGP <- fixparam.growth.vessel
 
-    vc <- dynparam.growth.t$v_c.vessel
+    vc <- dynparam.growth.t$v_c.vessel <- FGP$va_c.vessel * dynparam.growth.t$egR # ( wgR^(1 + dynparam.growth.t$L_just2) )
 
-    vw <- dynparam.growth.t$v_w.vessel
+    vw <- dynparam.growth.t$v_w.vessel <- FGP$va_w.vessel * dynparam.growth.t$wgR * (1+clim.today$L_i.vessel) # ( wgR^(1 - dynparam.growth.t$L_just2) )
 
-    vl <- dynparam.growth.t$v_l.vessel
+    vl <- dynparam.growth.t$v_l.vessel <- FGP$va_l.vessel * dynparam.growth.t$wgR * (1+clim.today$L_i.vessel) # ( wgR^(1 - dynparam.growth.t$L_just2) )
 
   }
 

@@ -28,14 +28,14 @@
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @importFrom data.table rbindlist fwrite as.data.table
 #' @importFrom openxlsx write.xlsx
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit cor.test setNames
 #' @importFrom purrr map2 map
 #' @importFrom parabar start_backend par_lapply
 #'
 #' @export
 #'
 btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
-                  writeRes = T, intraannual = F, gTmethod = "Jonhson" , division = "limit" ,
+                  writeRes = F, intraannual = F, gTmethod = "Jonhson" , division = "limit" ,
                   testLim = F,
                   CZgR = c(1,0,0,1 ) , Pbar = F , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
 
@@ -48,8 +48,8 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
     dir.create(path = eval(redir) )
   }
   ## 提取微气候模型参数
-  parameters$values <- as.numeric(parameters$values)
-  growth_Param  <- parameters[parameters$modul == "gR",] ## 生长速率阈值参数
+  parameters$Values <- as.numeric(parameters$Values)
+  growth_Param  <- parameters[parameters$Module == "GrowthRate",] ## 生长速率阈值参数
 
   ## error-catching
   if (is.na(syear) ) {syear = max( min(clim$Year), min(age$Year)  )   } else {
@@ -64,7 +64,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   clim <- clim[clim$Year %in% c(syear:eyear), ]
   age <- age[age$Year %in% c(syear:eyear), ]
 
-  temThreshold <- dplyr::filter(growth_Param, parameter == "T1")$values
+  temThreshold <- dplyr::filter(growth_Param, Parameter == "T1")$Values
 
   if ( all( gTmethod == "VS" ) ) {
     microclim <- Compute_gR(clim , growth_Param) |>
@@ -86,32 +86,32 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
     )
   ## 提取分裂模型参数：
 
-  fixparam.divi <- parameters[ parameters$modul == "division" & parameters$paramtype == "fixed",
-                               c("parameter","values") ]   |>
-    tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
+                               c("Parameter","Values") ]   |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
-  fixparam.growth.fiber <- parameters[parameters$modul == "growthC" & parameters$paramtype == "fixed" ,
-                                      c("parameter","values")]  |>
-    tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.growth.fiber <- parameters[parameters$Module == "FiberGrowth" ,
+                                      c("Parameter","Values")]  |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
-  fixparam.growth.vessel <- parameters[parameters$modul == "growthV" & parameters$paramtype == "fixed",
-                                       c("parameter","values") ] |>
-    tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.growth.vessel <- parameters[parameters$Module == "VesselGrowth" ,
+                                       c("Parameter","Values") ] |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
 
   ##### dynparam 未来动参在模型内指定，移除出参数表
   # dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,
   #                                 c("parameter","values") ] |>
   #   tidyr::spread( key = 'parameter', value = 'values')
-  dynparam.growth.0 <- data.frame( parameter = c('L_i.fiber','L_i.vessel','dCA_cz','SumCL','SumVL',
+  dynparam.growth.0 <- data.frame( Parameter = c('L_i.fiber','L_i.vessel','dCA_cz','SumCL','SumVL',
                                                  'SumV','v_c.fiber','v_w.fiber','v_l.fiber',
                                                  'v_c.vessel','v_w.vessel','v_l.vessel',
-                                                 'deltaVN','Vcz','grwothSeason','Age','T_age','czgR','egR' ),
-                                   values = 0 ) |>
-    tidyr::spread( key = 'parameter', value = 'values')
+                                                 'deltaVN','Vcz','grwothSeason','Age','T_age','czgR','egR', 'wgR' ),
+                                   Values = 0 ) |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
-  fixparam.growth.origin <- parameters[parameters$paramtype == "fixed",
-                                       c("parameter","modul", "values")]
+  fixparam.growth.origin <- parameters[parameters$ParamType == "FixedParam",
+                                       c("Parameter","Module", "Values")]
 
   dynparam.growth.0$Age <- age$age[ age$Year == syear] ## error catch
   ## 年循环计算开始前
@@ -124,17 +124,26 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   ## __end ----
 
   ## 设置各类初始值： 纤维细胞和导管初始值
-  cells <- dplyr::filter(parameters ,  grepl("C0", modul ) ) |>
-    dplyr::select( c("parameter","values") ) |>
-    tidyr::spread( key = 'parameter', value = 'values') |>
-    dplyr::select( "cell_L","Year", everything())
+
+
+
+  Cambial <- matrix(NA,ncol = 12, nrow = 1,
+                    dimnames = list(c("1"),c('Year','cell_L','CA','CV','WA','LWA','WT','CRD','CTD','EDOY','TDOY','DDOY' )) ) |>
+    as.data.frame()
+
+  Cambial$CV  <- parameters$Values[ parameters$Parameter == 'CV' ]
+  Cambial$WT  <- parameters$Values[ parameters$Parameter == 'WT' ]
+  Cambial$CTD <- parameters$Values[ parameters$Parameter == 'CTD' ]
+  Cambial$CRD <- Cambial$CV/(Cambial$CTD - 2*Cambial$WT   ) + 2*Cambial$WT
+  Cambial$CA  <- Cambial$CTD*Cambial$CRD
+  Cambial$WA  <- Cambial$CA-Cambial$CV
+
+  cells <- Cambial
   cells[is.na(cells)] <- 0
 
-  vessels <- dplyr::filter(parameters ,  grepl("V0", modul ) ) |>
-    dplyr::select( c("parameter","values") ) |>
-    tidyr::spread( key = 'parameter', value = 'values')|>
-    dplyr::select( "cell_L","Year", everything())
+  vessels <- Cambial |> dplyr::mutate( NoV = NA , VN = NA   )
   vessels[is.na(vessels)] <- 0
+
   ##
 
   # ## 生成每日活动变量记录表
@@ -294,6 +303,7 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
                            testLim = F,
                            CZgR = c(1,0,0,1 ) , Pbar = F , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
 
+  ##
   writeRes[intraannual == T] <- T
 
   if (writeRes == T) {
@@ -302,8 +312,8 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
     dir.create(path = eval(redir) )
   }
   ## 提取微气候模型参数
-  parameters$values <- as.numeric(parameters$values)
-  growth_Param  <- parameters[parameters$modul == "gR",] ## 生长速率阈值参数
+  parameters$Values <- as.numeric(parameters$Values)
+  growth_Param  <- parameters[parameters$Module == "GrowthRate",] ## 生长速率阈值参数
 
   ## error-catching
   if (is.na(syear) ) {syear = max( min(clim$Year), min(age$Year)  )   } else {
@@ -318,15 +328,16 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
   clim <- clim[clim$Year %in% c(syear:eyear), ]
   age <- age[age$Year %in% c(syear:eyear), ]
 
-  temThreshold <- dplyr::filter(growth_Param, parameter == "T1")$values
+  temThreshold <- dplyr::filter(growth_Param, Parameter == "T1")$Values
 
   if ( all( gTmethod == "VS" ) ) {
     microclim <- Compute_gR(clim , growth_Param) |>
-      dplyr::left_join(age,by="Year")  |>
-      data.table::as.data.table() ##VS
+      dplyr::left_join(age,by="Year")  # |>
+    # data.table::as.data.table() ##VS
   } else { microclim <- Compute_gR2(clim , growth_Param) |>
-    dplyr::left_join(age,by="Year")  |>
-    data.table::as.data.table() } ## 'Jonhson'
+    dplyr::left_join(age,by="Year") # |>
+  # data.table::as.data.table()
+  } ## 'Jonhson'
 
   ## 计算有效积温
   microclim <- microclim |> dplyr::group_by(Year) |>
@@ -339,63 +350,63 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
     )
   ## 提取分裂模型参数：
 
-  fixparam.divi <- parameters[ parameters$modul == "division" & parameters$paramtype == "fixed",
-                               c("parameter","values") ]   |>
-    tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
+                               c("Parameter","Values") ]   |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
-  fixparam.growth.fiber <- parameters[parameters$modul == "growthC" & parameters$paramtype == "fixed" ,
-                                      c("parameter","values")]  |>
-    tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.growth.fiber <- parameters[parameters$Module == "FiberGrowth" ,
+                                      c("Parameter","Values")]  |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
-  fixparam.growth.vessel <- parameters[parameters$modul == "growthV" & parameters$paramtype == "fixed",
-                                       c("parameter","values") ] |>
-    tidyr::spread( key = 'parameter', value = 'values')
+  fixparam.growth.vessel <- parameters[parameters$Module == "VesselGrowth" ,
+                                       c("Parameter","Values") ] |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
+
 
   ##### dynparam 未来动参在模型内指定，移除出参数表
   # dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,
   #                                 c("parameter","values") ] |>
   #   tidyr::spread( key = 'parameter', value = 'values')
-  dynparam.growth.0 <- data.frame( parameter = c('L_i.fiber','L_i.vessel','dCA_cz','SumCL','SumVL',
+  dynparam.growth.0 <- data.frame( Parameter = c('L_i.fiber','L_i.vessel','dCA_cz','SumCL','SumVL',
                                                  'SumV','v_c.fiber','v_w.fiber','v_l.fiber',
                                                  'v_c.vessel','v_w.vessel','v_l.vessel',
-                                                 'deltaVN','Vcz','grwothSeason','Age','T_age','czgR','egR' ),
-                                   values = 0 ) |>
-    tidyr::spread( key = 'parameter', value = 'values')
+                                                 'deltaVN','Vcz','grwothSeason','Age','T_age','czgR','egR', 'wgR' ),
+                                   Values = 0 ) |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
 
-  fixparam.growth.origin <- parameters[parameters$paramtype == "fixed",
-                                       c("parameter","modul", "values")]
+  fixparam.growth.origin <- parameters[parameters$ParamType == "FixedParam",
+                                       c("Parameter","Module", "Values")]
 
   dynparam.growth.0$Age <- age$age[ age$Year == syear] ## error catch
-
-
-  fixparam.growth.origin <- parameters[parameters$paramtype == "fixed",
-                                       c("parameter","modul", "values")]
-
   ## 年循环计算开始前
   ## RCTA line 计算 RCTA 平衡曲线
   RCTA <- fixparam.divi$maxRCTA  *
     nor( microclim$L_i.vessel[microclim$Year == syear ] *-1 )
-  ## 20240803 使用L+2 替换 L+1 ：this is L358
+  ## 20240803 使用L+2 替换 L+1 ：this is L116
   # RCTA[ RCTA <=  fixparam.divi$maxRCTA * fixparam.divi$RCTADivT  ] <- 99
   RCTA[ RCTA <=  fixparam.divi$maxRCTA * fixparam.divi$RCTADivT  ] <- fixparam.divi$maxRCTA * fixparam.divi$RCTADivT
   ## __end ----
 
   ## 设置各类初始值： 纤维细胞和导管初始值
-  cells <- dplyr::filter(parameters ,  grepl("C0", modul ) ) |>
-    dplyr::select( c("parameter","values") ) |>
-    tidyr::spread( key = 'parameter', value = 'values') |>
-    dplyr::select( "cell_L","Year", everything())
+
+  Cambial <- matrix(NA,ncol = 12, nrow = 1,
+                    dimnames = list(c("1"),c('Year','cell_L','CA','CV','WA','LWA','WT','CRD','CTD','EDOY','TDOY','DDOY' )) ) |>
+    as.data.frame()
+
+  Cambial$CV  <- parameters$Values[ parameters$Parameter == 'CV' ]
+  Cambial$WT  <- parameters$Values[ parameters$Parameter == 'WT' ]
+  Cambial$CTD <- parameters$Values[ parameters$Parameter == 'CTD' ]
+  Cambial$CRD <- Cambial$CV/(Cambial$CTD - 2*Cambial$WT   ) + 2*Cambial$WT
+  Cambial$CA  <- Cambial$CTD*Cambial$CRD
+  Cambial$WA  <- Cambial$CA-Cambial$CV
+
+  cells <- Cambial
   cells[is.na(cells)] <- 0
 
-  vessels <- dplyr::filter(parameters ,  grepl("V0", modul ) ) |>
-    dplyr::select( c("parameter","values") ) |>
-    tidyr::spread( key = 'parameter', value = 'values')|>
-    dplyr::select( "cell_L","Year", everything())
+  vessels <- Cambial |> dplyr::mutate( NoV = NA , VN = NA   )
   vessels[is.na(vessels)] <- 0
-  ##
+
   ## 年循 #####
-
-
 
   if (Pbar == T) {
     parabar::set_option("progress_track", T)
@@ -404,7 +415,6 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
   # ifelse( Pbar == T , parabar::set_option("progress_track", T), parabar::set_option("progress_track", FALSE))
 
   backend <- parabar::start_backend(cores = Cores, cluster_type = "psock", backend_type = "async")
-
 
   yRes <-
     parabar::par_lapply(backend, x = syear:eyear,

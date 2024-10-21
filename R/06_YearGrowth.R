@@ -32,7 +32,7 @@
 #' @importFrom magrittr %>%
 #' @importFrom data.table rbindlist fwrite as.data.table
 #' @importFrom openxlsx write.xlsx
-#' @importFrom stats na.omit
+#' @importFrom stats na.omit setNames cor.test
 #' @importFrom purrr map2 map
 ## #' @importFrom . cell_division daily_grwoth
 #'
@@ -51,7 +51,7 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
 
 
   ## check max VCA
-  if ( is.na( unique(gR.year$Lage)) == F ) {
+  if ( !is.na( unique(gR.year$Lage))  ) {
     ## VCA - age
 
     if( testMod == T ){
@@ -66,11 +66,11 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
 
     }else{
       fixparam.growth.vessel$CAmax <- gR.year$Lage[1] *
-        fixparam.growth.origin$values[fixparam.growth.origin$parameter == "CAmax" & fixparam.growth.origin$modul =="growthV" ]
+        fixparam.growth.origin$Values[fixparam.growth.origin$Parameter == "CAmax" & fixparam.growth.origin$Module =="VesselGrowth" ]
 
       ## Dage use  ####
       fixparam.divi$deltaD <- gR.year$Lage[1]^fixparam.divi$LAtoDiv * # gR.year$Dage[1] *
-        fixparam.growth.origin$values[fixparam.growth.origin$parameter == "deltaD" & fixparam.growth.origin$modul =="division" ]
+        fixparam.growth.origin$Values[fixparam.growth.origin$Parameter == "deltaD" & fixparam.growth.origin$Module =="CambialActivity" ]
 
       if (testLim == T ) { # 先不改，不要用
         fixparam.growth.vessel$ml <- unique(gR.year$Lage) * fixparam.growth.vessel$ml
@@ -109,9 +109,9 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
   ## 生成每日活动变量记录表
   dailyParameters <- data.frame(Year = NA,
                                 DOY = c(1:366)  ,
-                                matrix(NA , nrow = 366, ncol= 19   ))
+                                matrix(NA , nrow = 366, ncol= 20   ))
 
-  colnames(dailyParameters) <- c('years',	'Today',	'Age',	'czgR',	'dCA_cz'	,'deltaVN',	'egR',	'grwothSeason',
+  colnames(dailyParameters) <- c('years',	'Today',	'Age',	'czgR',	'dCA_cz'	,'deltaVN',	'egR','wgR',	'grwothSeason',
                                  'L_i.fiber',	'L_i.vessel',	'SumCL',	'SumV',	'SumVL',	'T_age',
                                  'v_c.fiber',	'v_c.vessel',	'v_l.fiber',	'v_l.vessel',	'v_w.fiber',	'v_w.vessel',	'Vcz')
   dailyParameters$years <- years
@@ -185,11 +185,11 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
         summaryDaily[[ Today ]] <- filter( summaryDaily[[ Today ]], CA != 0  )
 
         summaryDaily[[Today]] <-
-          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,CAs =  fixparam.growth.origin$values[ fixparam.growth.origin$parameter == "width"]  / CTD * CA   )
+          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,CAs =  fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth" ] / CTD * CA )
 
         summaryDaily[[Today]] <-
-          dplyr::mutate( summaryDaily[[Today]] ,Dh = (VCRD-2*VWT) ,  Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,
-                         Raddist =  round(  (cumsum( VAs +  CAs ) - VAs -  CAs)/fixparam.growth.origin$values[ fixparam.growth.origin$parameter == "width"]   ,3  )    )
+          dplyr::mutate( summaryDaily[[Today]] ,Dh = (VCRD-2*VWT), Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,
+                         Raddist =  round( (cumsum( VAs + CAs ) - VAs - CAs)/fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth" ] ,3 ) )
 
         # |> mutate(doy = "Today", .after = "Year")
 
@@ -199,21 +199,21 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
 
         AnnualGrowth[ AnnualGrowth$DOY == Today, 3:15 ] <-  daily.t   |> ## 不筛选成熟细胞
           dplyr::summarise(
-            RingArea = (mean( fixparam.growth.origin$values[ fixparam.growth.origin$parameter == "width"] / CTD ,na.rm = T) *
+            RingArea = (mean( fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"] / CTD ,na.rm = T) *
                           sum(CA,na.rm = T) + sum( VCA *VVN ,na.rm = T)) / 10^6  ,
-            RingWidth = RingArea / fixparam.growth.origin$values[ fixparam.growth.origin$parameter == "width"] * 1000,
+            RingWidth = RingArea / fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"] * 1000,
             CellLayer = max(cell_L,na.rm = T),
             MeanVesselLumenArea = mean( VCV+0 ,na.rm = T ),
             MaxVesselLumenArea = max( VCV+0 ,na.rm = T  ),
             VesselNumber = sum(VVN,na.rm = T ),
-            CellNumber = mean( fixparam.growth.origin$values[ fixparam.growth.origin$parameter == "width"]  / CTD * CellLayer ,na.rm = T) + max(VNoV,na.rm = T) ,
+            CellNumber = mean( fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"]  / CTD * CellLayer ,na.rm = T) + max(VNoV,na.rm = T) ,
             VesselTotalLumenArea =  sum( VCV *VVN ,na.rm = T)/10^6,
             VesselDensity = VesselNumber / RingArea,
             RCTA = VesselTotalLumenArea / RingArea,
             MeanDh = sum( (VCRD-2*VWT) ^5 ,na.rm = T ) / sum((VCRD-2*VWT)^4 ,na.rm = T )*10^-6, ##
             # MeanKh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *sum( (VCRD-2*VWT)^4  ,na.rm = T  ) , ##
             MeanKh = ( pi * 998.21)/(128*1.002*10^-9) * sum( (  (VCRD-2*VWT)*10^-6   )^4  ,na.rm = T  )   * VesselDensity *10^3 , ##
-            Ks = MeanKh/ (fixparam.growth.origin$values[ fixparam.growth.origin$parameter == "width"] * RingWidth),
+            Ks = MeanKh/ (fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"] * RingWidth),
           ) ## end summarise -----
 
         AnnualGrowth[ AnnualGrowth$DOY == Today, 16 ] <- deltaD_T  ## dD

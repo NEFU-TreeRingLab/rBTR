@@ -49,19 +49,21 @@ cell_division <- function( clim.today,
   egR[dynparam.growth.t$grwothSeason == 1 ] <- 0.001 ## 生长季快结束时细胞不扩大
 
   ## if age influence wgR
-  ## growth velocity
-  dynparam.growth.t$v_c.fiber  <- fixparam.divi$va_c.fiber  * egR # ( wgR^(1 + dynparam.growth.t$L_just) )
-
-  dynparam.growth.t$v_w.fiber  <- fixparam.divi$va_w.fiber  * wgR * (1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
-
-  dynparam.growth.t$v_l.fiber  <- fixparam.divi$va_l.fiber * wgR * (1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
 
 
-  dynparam.growth.t$v_c.vessel <- fixparam.divi$va_c.vessel * egR # ( wgR^(1 + dynparam.growth.t$L_just2) )
-
-  dynparam.growth.t$v_w.vessel <- fixparam.divi$va_w.vessel * wgR * (1+clim.today$L_i.vessel) # ( wgR^(1 - dynparam.growth.t$L_just2) )
-
-  dynparam.growth.t$v_l.vessel <- fixparam.divi$va_l.vessel * wgR * (1+clim.today$L_i.vessel) # ( wgR^(1 - dynparam.growth.t$L_just2) )
+  # ## growth velocity
+  # dynparam.growth.t$v_c.fiber  <- fixparam.divi$va_c.fiber  * egR # ( wgR^(1 + dynparam.growth.t$L_just) )
+  #
+  # dynparam.growth.t$v_w.fiber  <- fixparam.divi$va_w.fiber  * wgR * (1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
+  #
+  # dynparam.growth.t$v_l.fiber  <- fixparam.divi$va_l.fiber * wgR * (1+clim.today$L_i.fiber) # ( wgR^(1 - dynparam.growth.t$L_just) )
+  #
+  #
+  # dynparam.growth.t$v_c.vessel <- fixparam.divi$va_c.vessel * egR # ( wgR^(1 + dynparam.growth.t$L_just2) )
+  #
+  # dynparam.growth.t$v_w.vessel <- fixparam.divi$va_w.vessel * wgR * (1+clim.today$L_i.vessel) # ( wgR^(1 - dynparam.growth.t$L_just2) )
+  #
+  # dynparam.growth.t$v_l.vessel <- fixparam.divi$va_l.vessel * wgR * (1+clim.today$L_i.vessel) # ( wgR^(1 - dynparam.growth.t$L_just2) )
 
 
 
@@ -88,7 +90,7 @@ cell_division <- function( clim.today,
   # v_cz <- ( fixparam.divi$va_cz * cambial.cell.gR + dynparam.growth.t$T_age )* dynparam.growth.t$czgR    ## new
   v_cz <- ( fixparam.divi$va_cz * dynparam.growth.t$T_age )* dynparam.growth.t$czgR    ## 3.0ver
 
-  dynparam.growth.t$egR <- egR ## check 以后修改
+  # dynparam.growth.t$egR <- egR ## check 以后修改
 
   v_cz[dynparam.growth.t$grwothSeason == 1 ] <- 0 ## error catch 非生长季不生长
 
@@ -143,6 +145,10 @@ cell_division <- function( clim.today,
 
 
   # detach(fixparam.divi)
+
+  ## relative growth rate
+  dynparam.growth.t$egR  <-  egR # ( wgR^(1 + dynparam.growth.t$L_just) )
+  dynparam.growth.t$wgR  <-  wgR
 
   return( Today_G )
 
