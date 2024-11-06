@@ -185,8 +185,12 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
 
   ## 年循环 #####
+  if (syear ==  eyear ) {
+    pb <- utils::txtProgressBar(title = "PB",min = syear, max = (eyear+1), style = 3, file = stderr())
+  } else {
+     pb <- utils::txtProgressBar(title = "PB",min = syear, max = eyear, style = 3, file = stderr())
+  }
 
-  pb <- utils::txtProgressBar(title = "PB",min = syear, max = eyear, style = 3, file = stderr())
 
   yRes <- list()
 
@@ -299,9 +303,9 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 #' @export
 #'
 btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores = 5,
-                           writeRes = T,intraannual = F, gTmethod = "Jonhson" , division = "limit" ,
+                           writeRes = F,intraannual = F, gTmethod = "Jonhson" , division = "limit" ,
                            testLim = F,
-                           CZgR = c(1,0,0,1 ) , Pbar = F , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
+                           CZgR = c(1,0,0,1 ) , Pbar = T , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
 
   ##
   writeRes[intraannual == T] <- T

@@ -98,6 +98,10 @@ cell_division <- function( clim.today,
 
   dynparam.growth.t$Vcz <- v_cz
 
+  ## relative growth rate
+  dynparam.growth.t$egR  <-  egR # ( wgR^(1 + dynparam.growth.t$L_just) )
+  dynparam.growth.t$wgR  <-  wgR
+
   Layers <- 0
   # CA_cz = cells$CA + dynparam.growth.t$dCA_cz
   CA_cz <- dynparam.growth.t$dCA_cz
@@ -116,7 +120,7 @@ cell_division <- function( clim.today,
 
   # Ct <- cells[-1,] # 生成空白矩阵
   # Vt <- vessels[-1,]
-  Nv <- 0
+  # Nv <- 0
 
   if (Layers > 0 ) { ## 判读是否分裂
 
@@ -128,8 +132,8 @@ cell_division <- function( clim.today,
       Vt_t2 <-  Vt_t %/% deltaD_T - c( 0,Vt_t %/% deltaD_T ) [-(length(Vt_t)+1)]
       ifelse( Ct[1] == 1, Vt_t2[1] <-  Vt_t2[1] + 1 ,NA  )
 
-      Vt <- Ct[ Vt_t2 !=0 ]
-      Vn <- Vt_t2[ Vt_t2 !=0 ]
+      Vt <- ifelse( any( Vt_t2 !=0  ) , Ct[ Vt_t2 !=0 ] , 0    )
+      Vn <- ifelse( any( Vt_t2 !=0  ) , Vt_t2[ Vt_t2 !=0 ] , 0    )
       dynparam.growth.t$deltaVN <- max(Vt_t) %% deltaD_T
       dynparam.growth.t$SumV <- dynparam.growth.t$SumV + sum(Vt_t2)
 
@@ -146,9 +150,7 @@ cell_division <- function( clim.today,
 
   # detach(fixparam.divi)
 
-  ## relative growth rate
-  dynparam.growth.t$egR  <-  egR # ( wgR^(1 + dynparam.growth.t$L_just) )
-  dynparam.growth.t$wgR  <-  wgR
+
 
   return( Today_G )
 

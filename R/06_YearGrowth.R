@@ -133,7 +133,7 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
   AnnualGrowth$Year <- years
 
   ## Inner Year ######
-  for ( Today in 1: nrow(gR.year)) { ## daily sycle start
+  for ( Today in 1: nrow(gR.year) ) { ## daily sycle start ###200
     ## 每日 clim
     clim.today <- gR.year[Today,]
 
@@ -166,7 +166,7 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
                                          dynparam.growth.t = dynparam.growth.t,
                                          cells = cells, vessels = vessels,CZgR = CZgR,deltaD_T = deltaD_T)
 
-      dailyCells <- rBTR:::daily_grwoth( newCell = newCells[[1]], newVessel = newCells[[2]], vesselsNum = newCells[[3]],
+      dailyCells <- rBTR:::daily_grwoth( newCell = newCells$Ct, newVessel = newCells$Vt, vesselsNum = newCells[[3]],
                                            dailyCells , cells, vessels,
                                            clim.today,
                                            fixparam.growth.fiber, fixparam.growth.vessel ,

@@ -52,7 +52,7 @@ Compute_clim <- function(climdata , parameters, syear = NA, eyear = NA ){
   climdata <- dplyr::filter( climdata, Year >= syear & Year <= eyear)
 
   if (all(names(climdata) != 'DOY')) {
-    climdata <- mutate(climdata, DOY =   as.POSIXlt(ISOdate(Year ,Month, Day))$yday+1   )
+    climdata <- dplyr::mutate(climdata, DOY =   as.POSIXlt(ISOdate(Year ,Month, Day))$yday+1   )
   } ## if DOY end ---
 
 

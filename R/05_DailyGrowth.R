@@ -34,7 +34,7 @@ daily_grwoth <- function( newCell, newVessel, vesselsNum,
 
   ## 加入产生的细胞
   ifelse( all(newCell != 0 ),
-          dailyCells$dailyFiber[ dailyCells$dailyFiber$cell_L %in% as.numeric( newCell ),c(3:12) ]<- cells[,c(3:12)], NA )
+          dailyCells$dailyFiber[ dailyCells$dailyFiber$cell_L %in% as.numeric( newCell ),c(3:12) ] <- cells[,c(3:12)], NA )
   ifelse( all(newVessel != 0 ), {
     dailyCells$dailyVessels[ dailyCells$dailyVessels$cell_L %in% as.numeric( newVessel ), c(3:14)] <- vessels[,c(3:14)]
     dailyCells$dailyVessels$VN[ dailyCells$dailyVessels$cell_L %in% as.numeric( newVessel ) ] <- vesselsNum } , NA )
