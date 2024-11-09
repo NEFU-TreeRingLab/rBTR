@@ -185,11 +185,11 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
         summaryDaily[[ Today ]] <- filter( summaryDaily[[ Today ]], CA != 0  )
 
         summaryDaily[[Today]] <-
-          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,CAs =  fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth" ] / CTD * CA )
+          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,CAs =  fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth" ] / CTD * CA )
 
         summaryDaily[[Today]] <-
           dplyr::mutate( summaryDaily[[Today]] ,Dh = (VCRD-2*VWT), Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,
-                         Raddist =  round( (cumsum( VAs + CAs ) - VAs - CAs)/fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth" ] ,3 ) )
+                         Raddist =  round( (cumsum( VAs + CAs ) - VAs - CAs)/fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth" ] ,3 ) )
 
         # |> mutate(doy = "Today", .after = "Year")
 
@@ -199,21 +199,21 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
 
         AnnualGrowth[ AnnualGrowth$DOY == Today, 3:15 ] <-  daily.t   |> ## 不筛选成熟细胞
           dplyr::summarise(
-            RingArea = (mean( fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"] / CTD ,na.rm = T) *
+            RingArea = (mean( fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth"] / CTD ,na.rm = T) *
                           sum(CA,na.rm = T) + sum( VCA *VVN ,na.rm = T)) / 10^6  ,
-            RingWidth = RingArea / fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"] * 1000,
+            RingWidth = RingArea / fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth"] * 1000,
             CellLayer = max(cell_L,na.rm = T),
             MeanVesselLumenArea = mean( VCV+0 ,na.rm = T ),
             MaxVesselLumenArea = max( VCV+0 ,na.rm = T  ),
             VesselNumber = sum(VVN,na.rm = T ),
-            CellNumber = mean( fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"]  / CTD * CellLayer ,na.rm = T) + max(VNoV,na.rm = T) ,
+            CellNumber = mean( fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth"]  / CTD * CellLayer ,na.rm = T) + max(VNoV,na.rm = T) ,
             VesselTotalLumenArea =  sum( VCV *VVN ,na.rm = T)/10^6,
             VesselDensity = VesselNumber / RingArea,
             RCTA = VesselTotalLumenArea / RingArea,
             MeanDh = sum( (VCRD-2*VWT) ^5 ,na.rm = T ) / sum((VCRD-2*VWT)^4 ,na.rm = T )*10^-6, ##
             # MeanKh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *sum( (VCRD-2*VWT)^4  ,na.rm = T  ) , ##
             MeanKh = ( pi * 998.21)/(128*1.002*10^-9) * sum( (  (VCRD-2*VWT)*10^-6   )^4  ,na.rm = T  )   * VesselDensity *10^3 , ##
-            Ks = MeanKh/ (fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "TreeRingWidth"] * RingWidth),
+            Ks = MeanKh/ (fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth"] * RingWidth),
           ) ## end summarise -----
 
         AnnualGrowth[ AnnualGrowth$DOY == Today, 16 ] <- deltaD_T  ## dD
