@@ -36,8 +36,10 @@ Both functions work the same way, but `btr()` is better for short simulations, w
 # `Named`  - String. If `writeRes` is TRUE, results are saved in a folder named after this string.
 ```
 
+- Model parameterization methods can be consulted in the R package `BTRtools` [Link:BTRtools](https://github.com/NEFU-TreeRingLab/BTRtools)
 
 ####  Preparing Input Data
+
 - Meteorological Data
 
 The input meteorological data should follow this format:
@@ -45,7 +47,7 @@ The input meteorological data should follow this format:
 | ---- | ----- | ---- | ----- | ----- | ----- |
 | 2020 | 1     | 1    | -23.7 | 0.029 | 0.31  |
 
-***VPD *** (Vapor Pressure Deficit) can be replaced with ***RH***  (Relative Humidity).
+***VPD*** (Vapor Pressure Deficit) can be replaced with ***RH***  (Relative Humidity).
 ***soilM*** (Soil Moisture) can be estimated using ***PRE*** (precipitation data). However, the soil moisture estimation module hasn’t been rigorously tested yet.
 
 Before running the model, the input data needs to be pre-processed. Specify the  ***lat*** (site latitude) and ***rootd*** (root zone depth) during this step.
