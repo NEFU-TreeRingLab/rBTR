@@ -80,7 +80,14 @@ The model doesn’t simulate age trends directly, so you must provide this as in
 | ---- | ---- | --------- | --------- |
 | 2000 | 41   | 0.1718823 | 0.9606754 |
 
+***Tage*** is the trend of cambial activity;
+
+***Lage*** is the trend of cell enlargement.
+
+
+
 Example data is included in the package:
+
 ```r
 # Example: Load age trend data
 # data(BPage)
