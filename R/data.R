@@ -1,197 +1,73 @@
-##' Cell anatomical characteristics for \emph{Betula platyphylla} in Liangshui
-##'
-##'
-##' This dataset gives the fiber cell lumen area, fiber cell wall thickness
-##' and vessel cell lumen area for \emph{Betula platyphylla}
-##' at each relative ring width in each year.
-##'
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##'
-##'
-##' @docType data
-##' @keywords datasets
-##' @name BP_cells
-##' @usage data(BP_cells)
-##' @format A \code{data.frame} containing five columns with year(Year),
-##' relative ring width(RRingWidth), lumen area(LA) ,cell wall thickness(CWT)
-##' and cell type(CellType).
-##'
-'BP_cells'
-
-##' Cell anatomical characteristics for \emph{Fraxinus mandshurica} in Liangshui
-##'
-##'
-##' This dataset gives the fiber cell lumen area, fiber cell wall thickness
-##' and vessel cell lumen area for \emph{Fraxinus mandshurica}
-##' at each relative ring width in each year.
-##'
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##'
-##'
-##' @docType data
-##' @keywords datasets
-##' @name FM_cells
-##' @usage data(FM_cells)
-##' @format A \code{data.frame} containing five columns with year(Year),
-##' relative ring width(RRingWidth), lumen area(LA) ,cell wall thickness(CWT)
-##' and cell type(CellType).
-##'
-'FM_cells'
-
-##' Tree ring width for \emph{Betula platyphylla} in Liangshui
-##'
-##'
-##' This dataset gives the mean tree ring width for \emph{Betula platyphylla}
-##' in each year.
-##'
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##'
-##'
-##' @docType data
-##' @keywords datasets
-##' @name BP_ring
-##' @usage data(BP_ring)
-##' @format A \code{data.frame} containing four columns with year(Year),
-##' mean tree ring width(RingWidth), Standard Deviation(SD) and sample depth(N).
-##'
-##'
-'BP_ring'
-
-##' Tree ring width for \emph{Fraxinus mandshurica} in Liangshui
-##'
-##'
-##' This dataset gives the mean tree ring width for \emph{Fraxinus mandshurica}
-##' in each year.
-##'
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##'
-##'
-##' @docType data
-##' @keywords datasets
-##' @name FM_ring
-##' @usage data(FM_ring)
-##' @format A \code{data.frame} containing four columns with year(Year),
-##' mean tree ring width(RingWidth), Standard Deviation(SD) and sample depth(N).
-'FM_ring'
-
-
 ##' BTR model parameters for \emph{Betula platyphylla}
 ##'
 ##'
 ##' This dataset gives the BTR model parameters list for simulate
 ##' \emph{Betula platyphylla} xylogenesis in Liangshui.
 ##'
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
+##' @source A process-based model of climate-driven xylogenesis and tree-ring formation in broad-leaved trees (BTR).[DOI:10.1093/treephys/tpae127]
 ##'
 ##'
 ##' @docType data
 ##' @keywords datasets
-##' @name BP_param
-##' @usage data(BP_param)
+##' @name BPparam
+##' @usage data(BPparam)
 ##' @format A \code{data.frame} containing 7 columns :
-##' @format **in_formals** : is the parameter name in Manuscript,
-##' @format **parameter** : is the parameter name in Rcode,
-##' @format **description** : is the description of parameter,
-##' @format **note** : is the object for which the parameter is used,
-##' @format **paramtype** : is the parameter type,
-##' @format **modul** : is the module running the parameter,
-##' @format **values** : is the parameter value.
+##' @format **Parameter** : is the parameter name in Rcode,
+##' @format **ParamType** : is the parameter type,
+##' @format **Module** : is the module running the parameter,
+##' @format **Note** : is the object for which the parameter is used,
+##' @format **Description** : is the description of parameter,##'
+##' @format **Values** : is the parameter value.
+##' @format **Unit** : is the unit parameter value.
 ##'
-##'
-##'
-'BP_param'
+'BPparam'
 
-
-##' BTR model parameters for \emph{Fraxinus mandshurica}
+##' BTR model age input for \emph{Betula platyphylla}
 ##'
 ##'
-##' This dataset gives the BTR model parameters list for simulate
-##' \emph{Fraxinus mandshurica} xylogenesis in Liangshui.
+##' This dataset gives the BTR model age trend input for simulate
+##' \emph{Betula platyphylla} xylogenesis in Liangshui.
 ##'
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##'
+##' @source A process-based model of climate-driven xylogenesis and tree-ring formation in broad-leaved trees (BTR).[DOI:10.1093/treephys/tpae127]
 ##'
 ##' @docType data
 ##' @keywords datasets
-##' @name FM_param
-##' @usage data(FM_param)
-##' @format A \code{data.frame} containing 7 columns :
-##' @format **in_formals** : is the parameter name in Manuscript,
-##' @format **parameter** : is the parameter name in Rcode,
-##' @format **description** : is the description of parameter,
-##' @format **note** : is the object for which the parameter is used,
-##' @format **paramtype** : is the parameter type,
-##' @format **modul** : is the module running the parameter,
-##' @format **values** : is the parameter value.
+##' @name BPage
+##' @usage data(BPage)
+##' @format A \code{data.frame} containing 4 columns :
+##' @format **Year** : is the year of growth,
+##' @format **age** : is the age of trees corresponding to the year,
+##' @format **Tage** : is the trend of cambial activaty,
+##' @format **Lage** : is the trend of cell enlargement.
+##'
+'BPage'
 
+##' Meteorological data, input data for the BTR model from Liangshui,China
 ##'
-'FM_param'
-
-##' BTR model parameters for microclim module
-##'
-##'
-##' This dataset gives the BTR model parameters list for simulate microclim in Liangshui.
-##' Original code from "Run CPC Leaky Bucket model (submonthly version)"
-##' We have modified some of the parameters to allow the model to estimate data on a daily basis.
-##'
-##' @source Modifications of Suz Tolwinski-Ward's monthly time-step code by Nick Graham in 2011.
-#' Ported to R by SETW in 2015. Implementation of CPC Leaky Bucket model as described in
-#' Huang et al., 'Analysis of Model-Calculated Soil Moisture over the United States
-#' (1931-1993) and Applications to Long-Range Temperature Forecasts,' J. Clim. (1995)
-##'
+##' Model primary inputs include date, temperature, VPD soil moisture at Liangshui, Yichun, Heilongjiang, China.
+##' @source A process-based model of climate-driven xylogenesis and tree-ring formation in broad-leaved trees (BTR).[DOI:10.1093/treephys/tpae127]
 ##'
 ##' @docType data
 ##' @keywords datasets
-##' @name Clim_param
-##' @usage data(Clim_param)
-##' @format A \code{data.frame} containing 6 columns :
-##' @format **parameter** : is the parameter name in Rcode,
-##' @format **description** : is the description of parameter,
-##' @format **note** : is the note of parameter,
-##' @format **paramtype** : is the parameter type,
-##' @format **modul** : is the module running the parameter,
-##' @format **values** : is the parameter value.
-
-##'
-'Clim_param'
-
-
-##' Daily Mean Temperature, Total Precipitation and Relative Humidity for
-##' Liangshui,China
-##'
-##' This dataset gives the daily mean temperature, total
-##' precipitation and relative humidity at Liangshui, Yichun, Heilongjiang, China.
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##' @docType data
-##' @keywords datasets
-##' @name LS_clim
-##' @usage data(LS_clim)
-##' @format A \code{data.frame} containing 7 columns with year (Year),
-##' month (Month),day (Day), Day of year (DOY), precipitation (PRE),
-##' temperature (TEM) and relative humidity (RH).
-##'
-'LS_clim'
-
-##' Daily Mean Temperature, soil moisture and VPD for
-##' Liangshui,China
-##'
-##' This dataset gives the daily mean temperature, soil Moisture and
-##' VPD at Liangshui, Yichun, Heilongjiang, China.
-##' @source A process-based model of xylogenesis and tree-ring formation of
-##' broad-leaved trees (BTR) driven by climate. (not published yet)
-##' @docType data
-##' @keywords datasets
-##' @name LS_climdata
-##' @usage data(LS_climdata)
+##' @name Climdata
+##' @usage data(Climdata)
 ##' @format A \code{data.frame} containing 6 columns with year (Year),
-##' month (Month),day (Day), soil moisture (soilM),
-##' temperature (TEM) and VPD (VPD).
+##' month (Month),day (Day), temperature (TEM)
+##' vapor Pressure Deficit (VPD) and soil misture (soilM).
 ##'
-'LS_climdata'
+'Climdata'
+
+##' Meteorological data 2 , easily accessible from meteorological stations , input data for the BTR model from Liangshui,China
+##'
+##' Model primary inputs include date, temperature, VPD soil moisture at Liangshui, Yichun, Heilongjiang, China.
+##' @source A process-based model of climate-driven xylogenesis and tree-ring formation in broad-leaved trees (BTR).[DOI:10.1093/treephys/tpae127]
+##'
+##' @docType data
+##' @keywords datasets
+##' @name Climdata.2
+##' @usage data(Climdata.2)
+##' @format A \code{data.frame} containing 6 columns with year (Year),
+##' month (Month),day (Day), temperature (TEM),
+##' relative humidity (RH) and precipitation (PRE).
+##'
+'Climdata.2'

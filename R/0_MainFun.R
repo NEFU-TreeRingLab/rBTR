@@ -43,8 +43,8 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   writeRes[intraannual == T] <- T
 
   if (writeRes == T) {
+    Named[ !is.null(Named) ] <-paste0( Named,"/" )
     redir <- paste0(  Named,  "res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
-
     dir.create(path = eval(redir) )
   }
   ## 提取微气候模型参数
