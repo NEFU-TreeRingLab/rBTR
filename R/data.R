@@ -52,8 +52,12 @@
 ##' @name Climdata
 ##' @usage data(Climdata)
 ##' @format A \code{data.frame} containing 6 columns with year (Year),
-##' month (Month),day (Day), temperature (TEM)
-##' vapor Pressure Deficit (VPD) and soil misture (soilM).
+##' @format **Year** : Year,
+##' @format **Month** : Month,
+##' @format **Day** : Day,
+##' @format **TEM** : Temperature,
+##' @format **soilM** : Soil moisture,
+##' @format **VPD** : vapor Pressure Deficit.
 ##'
 'Climdata'
 
@@ -67,7 +71,11 @@
 ##' @name Climdata.2
 ##' @usage data(Climdata.2)
 ##' @format A \code{data.frame} containing 6 columns with year (Year),
-##' month (Month),day (Day), temperature (TEM),
-##' relative humidity (RH) and precipitation (PRE).
+##' @format **Year** : Year,
+##' @format **Month** : Month,
+##' @format **Day** : Day,
+##' @format **TEM** : Temperature,
+##' @format **RH** : Relative humidity,
+##' @format **PRE** : Precipitation.
 ##'
 'Climdata.2'
