@@ -6,8 +6,18 @@
 \title{Meteorological data, input data for the BTR model from Liangshui,China}
 \format{
 A \code{data.frame} containing 6 columns with year (Year),
-month (Month),day (Day), temperature (TEM)
-vapor Pressure Deficit (VPD) and soil misture (soilM).
+
+\strong{Year} : Year,
+
+\strong{Month} : Month,
+
+\strong{Day} : Day,
+
+\strong{TEM} : Temperature,
+
+\strong{soilM} : Soil moisture,
+
+\strong{VPD} : vapor Pressure Deficit.
 }
 \source{
 A process-based model of climate-driven xylogenesis and tree-ring formation in broad-leaved trees (BTR).\link{DOI:10.1093/treephys/tpae127}

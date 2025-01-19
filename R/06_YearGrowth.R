@@ -182,10 +182,11 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
 
         summaryDaily[[ Today ]][,1:12] <- dailyCells$dailyFiber
         summaryDaily[[ Today ]][,13:24] <- dailyCells$dailyVessels[,-1:-2]
-        summaryDaily[[ Today ]] <- filter( summaryDaily[[ Today ]], CA != 0  )
+        summaryDaily[[ Today ]] <- dplyr::filter( summaryDaily[[ Today ]], CA != 0  )
 
         summaryDaily[[Today]] <-
-          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,CAs =  fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth" ] / CTD * CA )
+          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,
+                        CAs = fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth" ] / CTD * CA )
 
         summaryDaily[[Today]] <-
           dplyr::mutate( summaryDaily[[Today]] ,Dh = (VCRD-2*VWT), Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,

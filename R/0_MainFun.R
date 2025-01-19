@@ -39,6 +39,9 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                   testLim = F,
                   CZgR = c(1,0,0,1 ) , Pbar = F , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
 
+  ## 检查变量名
+
+
   ##
   writeRes[intraannual == T] <- T
 
@@ -235,7 +238,7 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
   summaryYears <- data.table::rbindlist(Cells)
 
-  dailyParameters <- data.table::rbindlist(dailyParam) %>% mutate(Age = years - min(years)+Age )
+  dailyParameters <- data.table::rbindlist(dailyParam) |> dplyr::mutate(Age = years - min(years)+Age )
 
   Outputs <- list(annaulRing = AnnaulRing,
                   xylem_trait = summaryYears , IntraAnnualGrowth = IntraAnnual,
@@ -306,6 +309,10 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
                            writeRes = F,intraannual = F, gTmethod = "Jonhson" , division = "limit" ,
                            testLim = F,
                            CZgR = c(1,0,0,1 ) , Pbar = T , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
+  ## 检查变量名
+
+
+  ##
 
   ##
   writeRes[intraannual == T] <- T
