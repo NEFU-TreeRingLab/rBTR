@@ -23,10 +23,10 @@ Both functions work the same way, but `btr()` is better for short simulations, w
 ```r
 # Running the BTR model
 # Single-threaded version
-# btr(clim = Clims, paramters = BPparam, age = BPage, writeRes = F, Named = "TestData")
+# btr(clim = Clims, parameters = BPparam, age = BPage, writeRes = F, Named = "TestData")
 
 # Parallel version
-# btr_parallel(clim = Clims, paramters = BPparam, age = BPage, writeRes = F, Named = "TestData")
+# btr_parallel(clim = Clims, parameters = BPparam, age = BPage, writeRes = F, Named = "TestData")
 
 # Notes:
 # `clim`   - Input meteorological data (data.frame)
