@@ -26,10 +26,10 @@ rBTR 是 Broadleaved Tree-Ring (BTR) 模型的R包，详细信息可以参看论
 ```R
 # 运行BTR
 # 单核版本
-# btr(clim = Clims, paramters = BPparam, age = BPage,writeRes = F,Named = 'TestData' )
+# btr(clim = Clims, parameters = BPparam, age = BPage,writeRes = F,Named = 'TestData' )
 
 # 并行运算版本
-# btr_parallel(clim = Clims, paramters = BPparam, age = BPage,  writeRes = F,Named = 'TestData' )
+# btr_parallel(clim = Clims, parameters = BPparam, age = BPage,  writeRes = F,Named = 'TestData' )
 
 # Note:
 # clim 为模型输入的气象数据  data.frame
