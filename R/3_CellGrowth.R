@@ -79,6 +79,9 @@ cells_growth <- function( cell , CorV = "C" , clim.today, # layer.max,
     dWA_dt[cell$WT >= FGP$WTmax ] <- 0 ## error catching
     # dWA_dt[cell$DDOY != 0 ] <- 0 ## error catching
 
+    ### 细胞壁生长大于细胞总膨胀时扩大结束 dCA <= 0
+    cell$TDOY[ (dCA_dt - dWA_dt ) <=0 & cell$TDOY == 0 & cell$CA > 0 ] <- clim.today$DOY
+    cell$TDOY[ (dCA_dt - dWA_dt ) > 0 & cell$TDOY != 0 ] <- 0 ## 可逆的
 
     ### LWA 细胞壁木质化量
     dLWA_dt <- vl *  ( 1- 1/( 1 + (cell$CA - cell$WA )/FGP$ml )^FGP$sl  )*Death
@@ -116,7 +119,7 @@ cells_growth <- function( cell , CorV = "C" , clim.today, # layer.max,
 
     # cell$TDOY[dCA_dt == 0 & cell$TDOY == 0 ] = clim.today$DOY
 
-    cell$DDOY[cell$LWA >= cell$WA & cell$DDOY == 0  & cell$CA > 0  ] <- clim.today$DOY
+    cell$DDOY[ cell$LWA >= cell$WA & cell$DDOY == 0  & cell$CA > 0  ] <- clim.today$DOY
 
     cell$TDOY[ cell$WA >= FGP$WAmax & cell$TDOY == 0  & cell$CA > 0 ] <- clim.today$DOY
 

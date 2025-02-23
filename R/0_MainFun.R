@@ -40,8 +40,6 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                   CZgR = c(1,0,0,1 ) , Pbar = F , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
 
   ## 检查变量名
-
-
   ##
   writeRes[intraannual == T] <- T
 
@@ -50,6 +48,20 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
     redir <- paste0(  Named,  "res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
     dir.create(path = eval(redir) )
   }
+
+  ## 提取分裂模型参数：
+
+  fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
+                               c("Parameter","Values") ]   |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
+
+  fixparam.growth.fiber <- parameters[parameters$Module == "FiberGrowth" ,
+                                      c("Parameter","Values")]  |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
+
+  fixparam.growth.vessel <- parameters[parameters$Module == "VesselGrowth" ,
+                                       c("Parameter","Values") ] |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
   ## 提取微气候模型参数
   parameters$Values <- as.numeric(parameters$Values)
   growth_Param  <- parameters[parameters$Module == "GrowthRate",] ## 生长速率阈值参数
@@ -85,22 +97,14 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                                                  aT <0 ~ 0,
                                                  aT >= 0 ~ aT
                                                ),
-                                               aaT = cumsum(aT)
-    )
-  ## 提取分裂模型参数：
-
-  fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
-                               c("Parameter","Values") ]   |>
-    tidyr::spread( key = 'Parameter', value = 'Values')
-
-  fixparam.growth.fiber <- parameters[parameters$Module == "FiberGrowth" ,
-                                      c("Parameter","Values")]  |>
-    tidyr::spread( key = 'Parameter', value = 'Values')
-
-  fixparam.growth.vessel <- parameters[parameters$Module == "VesselGrowth" ,
-                                       c("Parameter","Values") ] |>
-    tidyr::spread( key = 'Parameter', value = 'Values')
-
+                                               aaT = cumsum(aT),
+                                               tn = c(dplyr::case_when(aT == 0 ~ 1 ,aT != 0 ~ 0  ) |>
+                                                      embed(5) |> rowSums() , 5,5,5,5 ) ,
+                                               Fs = which( aaT >= fixparam.divi$AAT & tn == 5  )[1],
+                                               GS = dplyr::case_when( aaT >= fixparam.divi$AAT &
+                                                                      DOY <= Fs ~ 'GR',
+                                                                      .default = "UN")
+    ) |> dplyr::select(-tn,-Fs)
 
   ##### dynparam 未来动参在模型内指定，移除出参数表
   # dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,
@@ -322,6 +326,19 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
 
     dir.create(path = eval(redir) )
   }
+  ## 提取分裂模型参数：
+
+  fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
+                               c("Parameter","Values") ]   |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
+
+  fixparam.growth.fiber <- parameters[parameters$Module == "FiberGrowth" ,
+                                      c("Parameter","Values")]  |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
+
+  fixparam.growth.vessel <- parameters[parameters$Module == "VesselGrowth" ,
+                                       c("Parameter","Values") ] |>
+    tidyr::spread( key = 'Parameter', value = 'Values')
   ## 提取微气候模型参数
   parameters$Values <- as.numeric(parameters$Values)
   growth_Param  <- parameters[parameters$Module == "GrowthRate",] ## 生长速率阈值参数
@@ -357,22 +374,14 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
                                                  aT <0 ~ 0,
                                                  aT >= 0 ~ aT
                                                ),
-                                               aaT = cumsum(aT)
-    )
-  ## 提取分裂模型参数：
-
-  fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
-                               c("Parameter","Values") ]   |>
-    tidyr::spread( key = 'Parameter', value = 'Values')
-
-  fixparam.growth.fiber <- parameters[parameters$Module == "FiberGrowth" ,
-                                      c("Parameter","Values")]  |>
-    tidyr::spread( key = 'Parameter', value = 'Values')
-
-  fixparam.growth.vessel <- parameters[parameters$Module == "VesselGrowth" ,
-                                       c("Parameter","Values") ] |>
-    tidyr::spread( key = 'Parameter', value = 'Values')
-
+                                               aaT = cumsum(aT),
+                                               tn = c(dplyr::case_when(aT == 0 ~ 1 ,aT != 0 ~ 0  ) |>
+                                                        embed(5) |> rowSums() , 5,5,5,5 ) ,
+                                               Fs = which( aaT >= fixparam.divi$AAT & tn == 5  )[1],
+                                               GS = dplyr::case_when( aaT >= fixparam.divi$AAT &
+                                                                        DOY <= Fs ~ 'GR',
+                                                                      .default = "UN")
+    ) |> dplyr::select(-tn,-Fs)
 
   ##### dynparam 未来动参在模型内指定，移除出参数表
   # dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,

@@ -16,12 +16,9 @@
 #'
 #' @importFrom dplyr bind_rows
 #'
-
 cell_division <- function( clim.today,
                            fixparam.divi,fixparam.growth.fiber,fixparam.growth.vessel,
                            dynparam.growth.t, cells, vessels, CZgR ,deltaD_T){   ## Fixp_cambi,, TA
-
-
 
   wgM <- clim.today$gM
   wgV <- clim.today$gV
@@ -45,8 +42,12 @@ cell_division <- function( clim.today,
 
 
   ## error catch
-  dynparam.growth.t$grwothSeason[egR <= 0.05 & clim.today$DOY > 200 ] <- 1 ##
-  egR[dynparam.growth.t$grwothSeason == 1 ] <- 0.001 ## 生长季快结束时细胞不扩大
+  dynparam.growth.t$grwothSeason[egR <= 0.01 & clim.today$DOY > 200 ] <- 1 ## grwothSeason 0:生长季; 1:非生长季
+  egR[ dynparam.growth.t$grwothSeason == 1 ] <- 0 ## 生长季快结束时细胞不扩大
+  # 限制一下生长速率？非生长季wgR增加，快速木质化
+  # egR[ egR < 0.01] <- 0
+  wgR[ egR == 0 & dynparam.growth.t$grwothSeason == 1 ] <- max(0.01,2*wgR)
+  ##
 
   ## if age influence wgR
 

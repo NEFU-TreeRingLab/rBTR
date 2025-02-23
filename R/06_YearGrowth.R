@@ -48,7 +48,7 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
   ## 数据初始化
   RCTAt <- 0 ### RCTA for dD
   gR.year <- microclim[microclim$Year == years,]
-
+  GSend <- max(gR.year$DOY[gR.year$GS =='GR' ])+1
 
   ## check max VCA
   if ( !is.na( unique(gR.year$Lage))  ) {
@@ -107,13 +107,12 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
                               return( c ) }   )
 
   ## 生成每日活动变量记录表
-  dailyParameters <- data.frame(Year = NA,
-                                DOY = c(1:366)  ,
+  dailyParameters <- data.frame(years = NA,
+                                Today = c(1:366)  ,
                                 matrix(NA , nrow = 366, ncol= 20   ))
 
-  colnames(dailyParameters) <- c('years',	'Today',	'Age',	'czgR',	'dCA_cz'	,'deltaVN',	'egR','wgR',	'grwothSeason',
-                                 'L_i.fiber',	'L_i.vessel',	'SumCL',	'SumV',	'SumVL',	'T_age',
-                                 'v_c.fiber',	'v_c.vessel',	'v_l.fiber',	'v_l.vessel',	'v_w.fiber',	'v_w.vessel',	'Vcz')
+  colnames(dailyParameters) <- c('years',	'Today',	"Age","czgR","dCAcz","deltaVN","egR","grwothSeason","LiFiber","LiVessel","SumCL",
+                                 "SumV","SumVL","Tage","vcFiber","vcVessel","vlFiber","vlVessel","vwFiber","vwVessel","Vcz","wgR"  )
   dailyParameters$years <- years
   # ## 生成年内细胞表
   # summaryYears <- matrix( nrow = 400 ,ncol = 29  ) |> data.frame() |>
@@ -133,11 +132,13 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
   AnnualGrowth$Year <- years
 
   ## Inner Year ######
-  for ( Today in 1: nrow(gR.year) ) { ## daily sycle start ###200
+  for ( Today in 1: nrow(gR.year) ) { ## daily sycle start ###200 ## nrow(gR.year)
     ## 每日 clim
     clim.today <- gR.year[Today,]
 
-    if (clim.today$aaT >= fixparam.divi$AAT & clim.today$rootd > 0 ) { ## if start 可以生长时计算细胞分裂分化
+    if (clim.today$aaT >= fixparam.divi$AAT & clim.today$rootd > 0 & Today <= GSend ) { ## if start 可以生长时计算细胞分裂分化
+
+      ### 生长季结束时 break
 
       # print( paste( "START",Today    ) )
 
@@ -172,14 +173,26 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
                                            fixparam.growth.fiber, fixparam.growth.vessel ,
                                            dynparam.growth.t =  newCells[[4]])
 
-      dailyParameters[dailyParameters$Today == Today,c(-1,-2) ] <- dynparam.growth.t <- newCells[[4]]
+      dailyParameters[dailyParameters$Today == Today,c(-1,-2) ] <- dynparam.growth.t <- newCells[[4]] ##
 
+      if ( Today == GSend ) {
+        dailyCells$dailyFiber <- dailyCells$dailyFiber %>%
+          mutate(
+            EDOY = replace(EDOY, EDOY == 0 & CA!=0, Today),
+            TDOY = replace(TDOY, TDOY == 0 & CA!=0, Today),
+            DDOY = replace(DDOY, DDOY == 0 & CA!=0, Today)
+          )
+        dailyCells$dailyVessels <- dailyCells$dailyVessels %>%
+          mutate(
+            EDOY = replace(EDOY, EDOY== 0 & CA!=0, Today),
+            TDOY = replace(TDOY, TDOY== 0 & CA!=0, Today),
+            DDOY = replace(DDOY, DDOY== 0 & CA!=0, Today)
+          )
+      }
 
       #### 汇总日数据 #####
-      if( any( dailyCells$dailyFiber$DDOY != 0)  ){ ### 有细胞成熟后计算？
-
+      if( any( dailyCells$dailyFiber$EDOY != 0)   ){ ### 有细胞成熟后计算？
         growth.day <- as.numeric(Today)
-
         summaryDaily[[ Today ]][,1:12] <- dailyCells$dailyFiber
         summaryDaily[[ Today ]][,13:24] <- dailyCells$dailyVessels[,-1:-2]
         summaryDaily[[ Today ]] <- dplyr::filter( summaryDaily[[ Today ]], CA != 0  )
@@ -220,20 +233,20 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
         AnnualGrowth[ AnnualGrowth$DOY == Today, 16 ] <- deltaD_T  ## dD
 
         AnnualGrowth[ AnnualGrowth$DOY == Today, 22 ] <-
-          max( daily.t$Raddist[ daily.t$DDOY != 0 ]) ##RW mature fiber
+          max( daily.t$Raddist[ daily.t$DDOY != 0 ],0) ##RW mature fiber
         AnnualGrowth[   AnnualGrowth$DOY == Today, 21 ] <-
-          max( daily.t$Raddist[ daily.t$TDOY != 0 ]) - max( daily.t$Raddist[ daily.t$DDOY != 0 ]) ##RW Thickness fiber
+          max( daily.t$Raddist[ daily.t$TDOY != 0 ],0) - max( daily.t$Raddist[ daily.t$DDOY != 0 ],0) ##RW Thickness fiber
         AnnualGrowth[   AnnualGrowth$DOY == Today, 20 ] <-
           AnnualGrowth[   AnnualGrowth$DOY == Today, 4 ] -
-          max( daily.t$Raddist[ daily.t$TDOY != 0 ])/1000 ##RW Enlargement fiber
+          max( daily.t$Raddist[ daily.t$TDOY != 0 ],0)/1000 ##RW Enlargement fiber
 
         AnnualGrowth[   AnnualGrowth$DOY == Today, 19 ] <-
-          max( daily.t$cell_L[ daily.t$DDOY != 0 ] ) ##cell_L mature fiber
+          max( daily.t$cell_L[ daily.t$DDOY != 0 ],0 ) ##cell_L mature fiber
         AnnualGrowth[   AnnualGrowth$DOY == Today, 18 ] <-
-          max( daily.t$cell_L[ daily.t$TDOY != 0 ]) - max( daily.t$cell_L[ daily.t$DDOY != 0 ]) ##cell_L Thickness fiber
+          max(max( daily.t$cell_L[ daily.t$TDOY != 0 ],0) - max( daily.t$cell_L[ daily.t$DDOY != 0 ],0) )  ##cell_L Thickness fiber
         AnnualGrowth[   AnnualGrowth$DOY == Today, 17 ] <-
           AnnualGrowth[   AnnualGrowth$DOY == Today, 5 ] -
-          max( daily.t$cell_L[ daily.t$TDOY != 0 ]) ##cell_L Enlargement fiber
+          max( daily.t$cell_L[ daily.t$TDOY != 0 ],0) ##cell_L Enlargement fiber
 
         # is.na(  AnnualGrowth[   AnnualGrowth$DOY == Today, ])
 
@@ -256,12 +269,11 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
   } ## if intraannual & writeRes  end -------
 
   #   summaryYears <- summaryDaily[[growth.day]]
-  dailyParameters$years <- years
+  # dailyParameters$years <- years
 
   summaryYears <- summaryDaily[[growth.day]] |> dplyr::mutate(VNoV = cumsum(VVN))
   summaryYears[ summaryYears == 0  ] <- NA
   summaryYears$Raddist[ is.na(summaryYears$Raddist )  ] <- 0 ###ERROR CATCH
-  # summaryYears$VNoV[summaryYears$VCA == 0 ] <- 0
 
   res <- list(
     summaryYears = summaryYears, ## 年轮细胞表
