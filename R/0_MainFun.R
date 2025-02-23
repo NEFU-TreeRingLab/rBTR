@@ -39,16 +39,13 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                   testLim = F,
                   CZgR = c(1,0,0,1 ) , Pbar = F , testMod = F ,Dcase = "min", Named = NULL ) { ## functions start  ring_width,
 
-  ## 检查变量名
-  ##
   writeRes[intraannual == T] <- T
 
   if (writeRes == T) {
-    Named[ !is.null(Named) ] <-paste0( Named,"/" )
     redir <- paste0(  Named,  "res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
+
     dir.create(path = eval(redir) )
   }
-
   ## 提取分裂模型参数：
 
   fixparam.divi <- parameters[ parameters$Module == "CambialActivity" ,
@@ -99,10 +96,10 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                                                ),
                                                aaT = cumsum(aT),
                                                tn = c(dplyr::case_when(aT == 0 ~ 1 ,aT != 0 ~ 0  ) |>
-                                                      embed(5) |> rowSums() , 5,5,5,5 ) ,
+                                                        embed(5) |> rowSums() , 5,5,5,5 ) ,
                                                Fs = which( aaT >= fixparam.divi$AAT & tn == 5  )[1],
                                                GS = dplyr::case_when( aaT >= fixparam.divi$AAT &
-                                                                      DOY <= Fs ~ 'GR',
+                                                                        DOY <= Fs ~ 'GR',
                                                                       .default = "UN")
     ) |> dplyr::select(-tn,-Fs)
 
@@ -132,8 +129,6 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
   ## 设置各类初始值： 纤维细胞和导管初始值
 
-
-
   Cambial <- matrix(NA,ncol = 12, nrow = 1,
                     dimnames = list(c("1"),c('Year','cell_L','CA','CV','WA','LWA','WT','CRD','CTD','EDOY','TDOY','DDOY' )) ) |>
     as.data.frame()
@@ -150,45 +145,6 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
   vessels <- Cambial |> dplyr::mutate( NoV = NA , VN = NA   )
   vessels[is.na(vessels)] <- 0
-
-  ##
-
-  # ## 生成每日活动变量记录表
-  # # dailyParameters <- data.frame(rep( syear:eyear,each =366  ),
-  # #                               rep( 1:366,time = (eyear - syear +1)  ),
-  # #                               matrix(nrow = (eyear - syear +1) *366, ncol= 19   ))
-  # dailyParameters <- data.frame(Year = NA,
-  #                               DOY = c(1:366)  ,
-  #                               matrix(NA , nrow = 366, ncol= 19   ))
-  #
-  # colnames(dailyParameters) <- c('years',	'Today',	'Age',	'czgR',	'dCA_cz'	,'deltaVN',	'egR',	'grwothSeason',
-  #                                'L_i.fiber',	'L_i.vessel',	'SumCL',	'SumV',	'SumVL',	'T_age',
-  #                                'v_c.fiber',	'v_c.vessel',	'v_l.fiber',	'v_l.vessel',	'v_w.fiber',	'v_w.vessel',	'Vcz')
-  # ## 生成年内细胞表
-  # # prow <- rep( 400, (eyear - syear+1) )
-  # # summaryYears <- purrr::map2( seq(syear,eyear,1) , prow ,
-  # #                              function( x ,prow){ c <- data.frame( seq(1: prow) , rep( x,prow  ),matrix(nrow =prow,ncol = 27   ) )
-  # #                              colnames(c) <- c( colnames(cells), paste0("V", colnames(vessels[,-1:-2])) ,
-  # #                                                "VAs" , "CAs" ,"Dh" ,"Kh","Raddist"   )
-  # #                              return( c ) }  )
-  # # names( summaryYears ) <- as.character( syear:eyear )
-  # summaryYears <- matrix( nrow = 400 ,ncol = 29  ) |> data.frame() |>
-  #   dplyr::rename( !!!setNames( paste0("X", c(1:29)) ,c( colnames(cells), paste0("V", colnames(vessels[,-1:-2])) ,
-  #                                                        "VAs" , "CAs" ,"Dh" ,"Kh","Raddist"   ))  )
-  # summaryYears$cell_L <- c(1:400)
-  #
-  # ## 生成年内细胞汇总表
-  # AnnualGrowth <- matrix(nrow = 366, ncol= 22   ) |> as.data.frame()  ## 16 - 22
-  #
-  # colnames(AnnualGrowth ) <- c( 'Year' ,'DOY' , 'RingArea' ,'RingWidth' ,'CellLayer' ,
-  #                               'MeanVesselLumenArea' , 'MaxesselLumenArea', 'VesselNumber' ,'CellNumber' , 'VesselTotalLumenArea',
-  #                               'VesselDensity', 'RCTA', 'MeanDh' , 'MeanKh' ,'Ks','dD', ## 1:16 old part
-  #                               "fiberInE", "fiberInT","fiberMature", "rwInE", "rwInT","rwMature" ) ## +6 new part
-  # AnnualGrowth$DOY  <- c(1:366)
-  #
-  #
-  # # AnnualGrowth$Year <- rep( syear:eyear,each =366  )
-  # # AnnualGrowth$DOY  <- rep( 1:366,time = (eyear - syear +1)  )
 
 
   ## 年循环 #####
@@ -224,15 +180,15 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   # InterAnnual <- list()
   dailyParam <- list()
 
-
   for (ys in 1:length(yRes)) {
-    Cells[[ names(yRes[ys]) ]] <- yRes[[ys]]$summaryYears
-    IntraAnnual[[ names(yRes[ys]) ]] <- yRes[[ys]]$AnnualGrowth
-    dailyParam[[ names(yRes[ys]) ]] <- yRes[[ys]]$dailyParameters
+    Cells[[ as.character(ys)  ]] <- yRes[[ys]]$summaryYears
+    IntraAnnual[[ as.character(ys) ]] <- yRes[[ys]]$AnnualGrowth
+    dailyParam[[ as.character(ys) ]] <- yRes[[ys]]$dailyParameters
   }
 
   AnnualGrowth <- IntraAnnual |>
-    data.table::rbindlist()
+    data.table::rbindlist() |>
+    dplyr::rename(VesselFraction = RCTA)
 
   AnnaulRing <- AnnualGrowth[,1:16] |>
     dplyr::group_by(Year) |>
@@ -242,14 +198,12 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
 
   summaryYears <- data.table::rbindlist(Cells)
 
-  dailyParameters <- data.table::rbindlist(dailyParam) |> dplyr::mutate(Age = years - min(years)+Age )
+  dailyParameters <- data.table::rbindlist(dailyParam)
 
   Outputs <- list(annaulRing = AnnaulRing,
-                  xylem_trait = summaryYears , IntraAnnualGrowth = IntraAnnual,
+                  xylem_trait = summaryYears , IntraAnnualGrowth = AnnualGrowth,
                   microclim = microclim, dailyParameters =  dailyParameters ) |>
     dev.outputs()
-
-
 
   resp <- list(parameters = parameters,age = age)
 
