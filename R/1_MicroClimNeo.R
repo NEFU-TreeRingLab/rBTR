@@ -20,7 +20,13 @@ Compute_clim <- function(climdata , syear = NA, eyear = NA , lat = NA, rootd = 1
 
   ## Column Name
   colnames(climdata) <- toupper(colnames(climdata) )
-  climdata <- dplyr::rename(climdata, Year = YEAR, Month = MONTH, Day =DAY ,soilM = SOILM  )
+  if( any(colnames(climdata) %in% 'SOILM' )  ){
+    climdata <- dplyr::rename(climdata, Year = YEAR, Month = MONTH, Day =DAY ,soilM = SOILM  )
+  } else {
+    climdata <- dplyr::rename(climdata, Year = YEAR, Month = MONTH, Day =DAY  )
+  }
+
+
   #### error-catching ####
 
   lat[ lat>90 | lat < -90   ] <- NA
