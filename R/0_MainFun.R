@@ -87,7 +87,10 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
   # data.table::as.data.table()
   } ## 'Jonhson'
 
-  ## 计算有效积温
+  ## 计算有效积温和气候生长季长度
+  ## 生长季开始::积温 > 阈值 & 第一次连续5天温度 > T1
+  ## 生长季结束:: 最高温度日期以后 & 积温 > 阈值 & 第一次连续5天温度 < T1
+
   microclim <- microclim |> dplyr::group_by(Year) |>
     dplyr::arrange(Year,DOY) |> dplyr::mutate( aT  = TEM - temThreshold,
                                                aT = dplyr::case_when(
@@ -97,11 +100,12 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
                                                aaT = cumsum(aT),
                                                tn = c(dplyr::case_when(aT == 0 ~ 1 ,aT != 0 ~ 0  ) |>
                                                         embed(5) |> rowSums() , 5,5,5,5 ) ,
-                                               Fs = which( aaT >= fixparam.divi$AAT & tn == 5  )[1],
-                                               GS = dplyr::case_when( aaT >= fixparam.divi$AAT &
-                                                                        DOY <= Fs ~ 'GR',
+                                               HotDay = which.max(TEM),
+                                               Fs1 = which(aaT >= fixparam.divi$AAT & tn == 0    )[1],
+                                               Fs2 = which( aaT >= fixparam.divi$AAT & tn == 5 & DOY >= HotDay  )[1],
+                                               GS = dplyr::case_when( DOY >= Fs1 & DOY <= Fs2  ~ 'GR',
                                                                       .default = "UN")
-    ) |> dplyr::select(-tn,-Fs)
+    ) |> dplyr::select(-tn,-Fs1,-Fs2,-HotDay)
 
   ##### dynparam 未来动参在模型内指定，移除出参数表
   # dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,
@@ -321,7 +325,10 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
   # data.table::as.data.table()
   } ## 'Jonhson'
 
-  ## 计算有效积温
+  ## 计算有效积温和气候生长季长度
+  ## 生长季开始::积温 > 阈值 & 第一次连续5天温度 > T1
+  ## 生长季结束:: 最高温度日期以后 & 积温 > 阈值 & 第一次连续5天温度 < T1
+
   microclim <- microclim |> dplyr::group_by(Year) |>
     dplyr::arrange(Year,DOY) |> dplyr::mutate( aT  = TEM - temThreshold,
                                                aT = dplyr::case_when(
@@ -331,11 +338,12 @@ btr_parallel <- function(  clim, parameters, age, syear = NA, eyear = NA ,Cores 
                                                aaT = cumsum(aT),
                                                tn = c(dplyr::case_when(aT == 0 ~ 1 ,aT != 0 ~ 0  ) |>
                                                         embed(5) |> rowSums() , 5,5,5,5 ) ,
-                                               Fs = which( aaT >= fixparam.divi$AAT & tn == 5  )[1],
-                                               GS = dplyr::case_when( aaT >= fixparam.divi$AAT &
-                                                                        DOY <= Fs ~ 'GR',
+                                               HotDay = which.max(TEM),
+                                               Fs1 = which(aaT >= fixparam.divi$AAT & tn == 0    )[1],
+                                               Fs2 = which( aaT >= fixparam.divi$AAT & tn == 5 & DOY >= HotDay  )[1],
+                                               GS = dplyr::case_when( DOY >= Fs1 & DOY <= Fs2  ~ 'GR',
                                                                       .default = "UN")
-    ) |> dplyr::select(-tn,-Fs)
+    ) |> dplyr::select(-tn,-Fs1,-Fs2,-HotDay)
 
   ##### dynparam 未来动参在模型内指定，移除出参数表
   # dynparam.growth.0 <- parameters[parameters$modul == "division" & parameters$paramtype == "dynamic" ,
