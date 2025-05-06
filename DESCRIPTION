@@ -1,6 +1,6 @@
 Package: rBTR
 Title: An R implementation of the Broadleaved Tree-Ring (BTR) model.
-Version: 1.1.1.250301
+Version: 1.2.1.250426
 Authors@R: 
     c(person(given ="Binqing", 
              family = "Zhao",

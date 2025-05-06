@@ -128,7 +128,8 @@ btr <- function(  clim, parameters, age, syear = NA, eyear = NA ,
     nor( microclim$L_i.vessel[microclim$Year == syear ] *-1 )
   ## 20240803 使用L+2 替换 L+1 ：this is L116
   # RCTA[ RCTA <=  fixparam.divi$maxRCTA * fixparam.divi$RCTADivT  ] <- 99
-  RCTA[ RCTA <=  fixparam.divi$maxRCTA * fixparam.divi$RCTADivT  ] <- fixparam.divi$maxRCTA * fixparam.divi$RCTADivT
+  RCTA[ RCTA <=  fixparam.divi$maxRCTA * fixparam.divi$RCTADivT  ] <-
+    fixparam.divi$maxRCTA * fixparam.divi$RCTADivT
   ## __end ----
 
   ## 设置各类初始值： 纤维细胞和导管初始值
