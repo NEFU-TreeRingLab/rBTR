@@ -68,9 +68,15 @@ compute_clim <- function(climdata , start.year = NA, end.year = NA ,
 
   .checkLs[ !is.na(lat) ] <-1
   .checkLs[ 'LS' %in% .dtColname & !is.na(lat) ] <-2
+  if ( .checkLs ==2 ) {
+    climdata <- dplyr::rename(climdata,Ls = LS )
+  }
 
   .checkRootd[ !is.na(rootd)  ] <- 1
-  .checkRootd[ 'CROOTD' %in% dtColname ] <- 2
+  .checkRootd[ 'ROOTD' %in% dtColname ] <- 2
+  if ( .checkRootd ==2 ) {
+    climdata <- dplyr::rename(climdata,rootd = ROOTD )
+  }
 
   if( any(c(.checkTem, .checkVPD, .checkSoilM, .checkLs, .checkRootd) == 0 ) ){
     stop("Some data missing")
@@ -89,21 +95,21 @@ compute_clim <- function(climdata , start.year = NA, end.year = NA ,
   }
 
   if (.checkLs == 1) {
-    climdata <- Compute_dayLength(climdata , lat) |>
+    climdata <- mypkg_computeDaylength(climdata , lat) |>
       dplyr::mutate( gE = L/max(L), Ls = L , dL_i = c( 0 , diff( L ) ) *12    )
   }
 
   if ( .checkLs == 2 ){
-    climdata <- Compute_dayLength(climdata , lat) |>
+    climdata <- mypkg_computeDaylength(climdata , lat) |>
       dplyr::mutate( gE = Ls/max(L),  dL_i = c( 0 , diff( L ) ) *12    )
   }
 
   if ( .checkrootd == 1 ) {
-    climdata <- Compute_rootd( climdata, rootd ,... ) ##
+    climdata <- mypkg_computeRootd( climdata, rootd ,... ) ##
   }
 
   if ( .checksoilM == 1 ) {
-    climdata <- Computer_soliM( climdata,... ) ##
+    climdata <- mypkg_computerSoliMoisture( climdata,... ) ##
   }
   return(climdata )
 } ##Compute_clim end -----------------------
@@ -116,11 +122,11 @@ compute_clim <- function(climdata , start.year = NA, end.year = NA ,
 #' @importFrom dplyr group_by reframe ungroup left_join
 #'
 #' @return day length and standardization day length
-Compute_dayLength <- function(climdata,lat ){
+mypkg_computeDaylength <- function(climdata,lat ){
 
   #单位转换与常数设置
-  lats  <-  lat * pi / 180# change to radians 角度改为弧度制
-  I_0  <-  118.109#太阳常数MJ/s
+  .lats  <-  lat * pi / 180# change to radians 角度改为弧度制
+  # .I_0  <-  118.109#太阳常数MJ/s
 
   #日序公转角度
   # theta_0  <-  2 * pi * (doy - 1) / DAL[ly]
@@ -137,7 +143,7 @@ Compute_dayLength <- function(climdata,lat ){
                    0.006758 * cos(2 * dt$theta_0) + 0.000970 * sin(2 * dt$theta_0)-
                    0.002697 * cos(3 * dt$theta_0) + 0.000148 * sin(3 * dt$theta_0))
   #时角
-  dt$omega_0  <-  acos(-tan(lats) * tan(dt$delta))
+  dt$omega_0  <-  acos(-tan(.lats) * tan(dt$delta))
   #最大日照时数
   dt$N  <-  24 / pi * dt$omega_0
   dt$L  <-  dt$N / 12
@@ -146,7 +152,7 @@ Compute_dayLength <- function(climdata,lat ){
   climdata <- dplyr::left_join( climdata, dt[ ,c('Year', "DOY",'L')] )
 
   # #逐日天文辐射量
-  # dt$s_0  <-  ((I_0) / pi) * dt$rho_2 * (dt$omega_0 * sin(lat) * sin(dt$delta) +
+  # dt$s_0  <-  ((.I_0) / pi) * dt$rho_2 * (dt$omega_0 * sin(lat) * sin(dt$delta) +
   #                                    cos(lat) * cos(dt$delta) * sin(dt$omega_0))
 
   # #日照百分率
@@ -177,12 +183,12 @@ Compute_dayLength <- function(climdata,lat ){
 #' @importFrom dplyr group_by mutate case_when select
 #' @return Active soil depth
 
-Compute_rootd  <-  function(climdata, rootd0, paramSoilMelt = c( p1 = NA , p2 = NA ), Tm = NA   ){
+mypkg_computeRootd  <-  function(climdata, rootd0, paramSoilMelt = c( p1 = NA , p2 = NA ), Tm = NA   ){
 
   ####
-  ezRootd <- 0
-  ezRootd[ !is.na(Tm) ] <- 1
-  ezRootd[ all( !is.na( paramSoilMelt ) ) ] <- 2
+  .ezRootd <- 0
+  .ezRootd[ !is.na(Tm) ] <- 1
+  .ezRootd[ all( !is.na( paramSoilMelt ) ) ] <- 2
 
   climdata <- climdata |> dplyr::group_by(Year) |>
     dplyr::mutate(rootd = 0,
@@ -193,47 +199,47 @@ Compute_rootd  <-  function(climdata, rootd0, paramSoilMelt = c( p1 = NA , p2 = 
   climdata$winterIndx <- c( rep( 0,4  ),  sapply(5:length(climdata$winterIndx), function(i) sum(climdata$winterIndx[(i - 5 + 1):i]))  )
   climdata$winIdx[ climdata$winterIndx == 5 ] <- 1
 
-  Soil_melt_switch <- ifelse( climdata$TEM[1] >0, T, F )
-  winter_switch <- ifelse( climdata$TEM[1] <= 0, T, F )
+  .Soil_melt_switch <- ifelse( climdata$TEM[1] >0, T, F )
+  .winter_switch <- ifelse( climdata$TEM[1] <= 0, T, F )
 
   for (days_i in 2: nrow(climdata)) {
 
     ### 计算季节与土壤状态
-    if ( winter_switch ) {
+    if ( .winter_switch ) {
       ## 当前为冬季时
-      cuntT <- 0
-      winter_switch[climdata$winIdx[ days_i ] == 1 ] <- F ## 当日达到连续5天均温0上时关闭冬季
+      .cuntT <- 0
+      .winter_switch[climdata$winIdx[ days_i ] == 1 ] <- FALSE ## 当日达到连续5天均温0上时关闭冬季
       climdata$Winter[ days_i ] <- "Ungrowth"
-      climdata$Winter[ days_i ][ winter_switch==F  ] <- "Growth"
+      climdata$Winter[ days_i ][ .winter_switch==FALSE  ] <- "Growth"
     }else{
       ## 打开冬季的条件
-      winter_switch[climdata$winterIndx[ days_i ] == 0 ] <- T ## 当日达到连续5天均温0上时关闭冬季
+      .winter_switch[climdata$winterIndx[ days_i ] == 0 ] <- TRUE ## 当日达到连续5天均温0上时关闭冬季
       climdata$Winter[ days_i ] <- "Growth"
-      climdata$Winter[ days_i ][ winter_switch==T ] <- "Ungrowth"
+      climdata$Winter[ days_i ][ .winter_switch==TRUE ] <- "Ungrowth"
 
-      if ( ezRootd == 1 ) {
-        cuntT[ Soil_melt_switch == F ] <- cuntT +  max(climdata$TEM[ days_i ],0)
-        Soil_melt_switch[ cuntT >= Tm  ] <- T
+      if ( .ezRootd == 1 ) {
+        .cuntT[ .Soil_melt_switch == FALSE ] <- .cuntT +  max(climdata$TEM[ days_i ],0)
+        .Soil_melt_switch[ .cuntT >= Tm  ] <- TRUE
       }
     }
     ### 计算土壤解冻深度
 
 
 
-    if( ezRootd == 2 ){
+    if( .ezRootd == 2 ){
       ### 判断土壤状态
-      if ( climdata$TEM[days_i] > 0 & winter_switch == F  ) {
+      if ( climdata$TEM[days_i] > 0 & .winter_switch == FALSE  ) {
         climdata$rootd[days_i]  <- min( (  climdata$rootd[days_i-1] + climdata$TEM[days_i] * paramSoilMelt['p1'] * exp( -paramSoilMelt['p2'] * climdata$rootd[days_i - 1])), ##VSM土壤解冻方程
                                         rootd0  ) ### 土壤开始融化
       }else{ climdata$rootd[days_i]  <-  0 } ### 土壤融化
     }
-    if( ezRootd == 1 ){
+    if( .ezRootd == 1 ){
       ### 判断土壤状态
-      if (Soil_melt_switch ) {
+      if (.Soil_melt_switch ) {
         climdata$rootd[days_i]  <- rootd0 ### 土壤融化开关为 TRUE 时土壤开始融化
       }else{ climdata$rootd[days_i]  <-  0 } ### 土壤融化开关为 FALSE 时土壤开始融化
     } ##
-    if( ezRootd == 0 ){ climdata$rootd[days_i][ winter_switch == F ]  <- rootd0 }
+    if( .ezRootd == 0 ){ climdata$rootd[days_i][ .winter_switch == FALSE ]  <- rootd0 }
 
 
   }
@@ -249,14 +255,14 @@ Compute_rootd  <-  function(climdata, rootd0, paramSoilMelt = c( p1 = NA , p2 = 
 #'
 #' @return climsdata
 
-Compute_P <-  function(climdata  ){  ## 雨雪模块 start
-  P_snow <- 0
+mypkg_computePREnSNOW <-  function(climdata  ){  ## 雨雪模块 start
+  .P_snow <- 0
   ##降雪过程
   for (t in 1:nrow(climdata)) {###日循环
-    P_snow[ climdata$TEM[t] <= 0  ] <- climdata$PRE[t] + P_snow
+    .P_snow[ climdata$TEM[t] <= 0  ] <- climdata$PRE[t] + .P_snow
     climdata$PRE[t][ climdata$TEM[t] <= 0  ] <- 0
-    climdata$PRE[t][ climdata$TEM[t] > 0 & P_snow != 0 ] <- climdata$PRE[t] + P_snow
-    P_snow[ climdata$TEM[t] > 0 & P_snow != 0  ] <- 0
+    climdata$PRE[t][ climdata$TEM[t] > 0 & .P_snow != 0 ] <- climdata$PRE[t] + .P_snow
+    .P_snow[ climdata$TEM[t] > 0 & .P_snow != 0  ] <- 0
   }
   return(climdata)
 } ## 雨雪模块 end ------------------------------------------------------------
@@ -277,15 +283,15 @@ Compute_P <-  function(climdata  ){  ## 雨雪模块 start
 #' SoilM soil moisture computed via the CPC Leaky Bucket model (in v/v, 12 x Nyrs)
 #' potEv Potential evapotranspiration computed via Thornthwaite's 1947 scheme (in mm).
 #'
-Computer_soliM <- function(climdata,
+mypkg_computerSoliMoisture <- function(climdata,
                            paramSoilM = c(M0 = 0.35, dp = 2, alph = 0.0013 , Mmax = 0.6, Mmin = 0.042 ,
                                           mu.th = 1.09, m.th = 4.1 ) ){
 
   climdata <- Compute_P(climdata)
   summaryMicroClim <- logical()
 
-  for ( y in unique(climdata$YEAR) ) {  ## 按年拆分数据循环
-    ydata <- climdata[ climdata$YEAR == y, ]
+  for ( y in unique(climdata$Year) ) {  ## 按年拆分数据循环
+    ydata <- climdata[ climdata$Year == y, ]
 
     soilM <- potEv <- gT <- gM <- matrix(NA, nrow(ydata), 1)
     deltaWaterFlow <- CG <- CR1 <- CR2 <- matrix(0, nrow(ydata), 1)
