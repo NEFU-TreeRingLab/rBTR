@@ -40,7 +40,7 @@
 #'
 ## #' @export
 
-year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , division,Dcase, CZgR,
+year_growth.old <- function( x, microclim ,testMod,testLim,intraannual, writeRes , division,Dcase, CZgR,
                          cells, vessels,
                          dynparam.growth.0,RCTA,
                          fixparam.divi,fixparam.growth.fiber, fixparam.growth.origin, fixparam.growth.vessel  ){
@@ -198,11 +198,13 @@ year_growth <- function( x, microclim ,testMod,testLim,intraannual, writeRes , d
         summaryDaily[[ Today ]] <- dplyr::filter( summaryDaily[[ Today ]], CA != 0  )
 
         summaryDaily[[Today]] <-
-          dplyr::mutate(summaryDaily[[Today]], VAs=VCA *VVN,
+          dplyr::mutate(summaryDaily[[Today]],
+                        VAs=VCA *VVN,
                         CAs = fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth" ] / CTD * CA )
 
         summaryDaily[[Today]] <-
-          dplyr::mutate( summaryDaily[[Today]] ,Dh = (VCRD-2*VWT), Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,
+          dplyr::mutate( summaryDaily[[Today]] ,
+                         Dh = (VCRD-2*VWT), Kh = (10^-24 * pi * 998.2)/(128*1.002*10^-9) *(VCRD-2*VWT)^4  ,
                          Raddist =  round( (cumsum( VAs + CAs ) - VAs - CAs)/fixparam.growth.origin$Values[ fixparam.growth.origin$Parameter == "Twidth" ] ,3 ) )
 
         # |> mutate(doy = "Today", .after = "Year")

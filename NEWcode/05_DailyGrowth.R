@@ -26,7 +26,7 @@
 
 
 
-daily_grwoth <- function( newCell, newVessel, vesselsNum,
+daily_grwoth.old <- function( newCell, newVessel, vesselsNum,
                           dailyCells , cells, vessels,
                           clim.today,
                           fixparam.growth.fiber, fixparam.growth.vessel,

@@ -184,6 +184,23 @@ mod.test.cells <- function( devOutputs=BtrResList , OBSdata ,
 } ## end func
 
 
+#' replace parameters data
+#'
+#' @importFrom data.table as.data.table
+#' @import data.table
+#'
+#' @return Pdata.frame
+#'
+#' @param DataA DataA
+#' @param DataB DataB
+#' @param ons by on colume
+#'
+NewReplacesOld  <- function( DataNew , DataOld, ons = c( 'Parameter' )  ){
 
+  DataNew <- data.table::as.data.table(DataNew |> dplyr::rename(NewValues = Values)  )
+  DataOut <- data.table::as.data.table(DataOld)
+  DataOut[DataNew, Values := NewValues, on = ons ]
+  return( as.data.frame(DataOut))
+}
 
 

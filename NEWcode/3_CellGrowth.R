@@ -12,7 +12,7 @@
 #'
 ## #' @export
 
-cells_growth <- function( cell , CorV = "C" , clim.today, # layer.max,
+cells_growth.old <- function( cell , CorV = "C" , clim.today, # layer.max,
                           fixparam.growth.fiber,fixparam.growth.vessel, dynparam.growth.t ){ ## function start
 
   if(CorV == "C"){

@@ -22,7 +22,7 @@
 #' @export
 #'
 
-btr_lite <- function(  clim, parameters, syear = NA, eyear = NA , mCRD = 16){ ## functions start  ring_width,
+btr_lite.old <- function(  clim, parameters, syear = NA, eyear = NA , mCRD = 16){ ## functions start  ring_width,
 
   redir <- paste0("res_",format(Sys.time(), "%Y%m%d_%H-%M-%OS"))
 

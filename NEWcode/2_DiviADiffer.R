@@ -16,7 +16,7 @@
 #'
 #' @importFrom dplyr bind_rows
 #'
-cell_division <- function( clim.today,
+cell_division.old <- function( clim.today,
                            fixparam.divi,fixparam.growth.fiber,fixparam.growth.vessel,
                            dynparam.growth.t, cells, vessels, CZgR ,deltaD_T){   ## Fixp_cambi,, TA
 
