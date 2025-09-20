@@ -73,7 +73,7 @@ compute_clim <- function(climdata , start.year = NA, end.year = NA ,
   }
 
   .checkRootd[ !is.na(rootd)  ] <- 1
-  .checkRootd[ 'ROOTD' %in% dtColname ] <- 2
+  .checkRootd[ 'ROOTD' %in% .dtColname ] <- 2
   if ( .checkRootd ==2 ) {
     climdata <- dplyr::rename(climdata,rootd = ROOTD )
   }
@@ -104,11 +104,11 @@ compute_clim <- function(climdata , start.year = NA, end.year = NA ,
       dplyr::mutate( gE = Ls/max(L),  dL_i = c( 0 , diff( L ) ) *12    )
   }
 
-  if ( .checkrootd == 1 ) {
+  if ( .checkRootd == 1 ) {
     climdata <- mypkg_computeRootd( climdata, rootd ,... ) ##
   }
 
-  if ( .checksoilM == 1 ) {
+  if ( .checkSoilM == 1 ) {
     climdata <- mypkg_computerSoliMoisture( climdata,... ) ##
   }
   return(climdata )
@@ -176,14 +176,14 @@ mypkg_computeDaylength <- function(climdata,lat ){
 #' Active soil depth
 #'
 #' @param climdata climsdata
-#' @param rootd0 root zone depth
+#' @param rootd root zone depth
 #' @param paramSoilMelt Soil melt parameters, Where p1 is Soil thawing coefficient 1, p2 is Soil thawing coefficient 2.
 #' @param Tm Temperature of soil melt
 #'
 #' @importFrom dplyr group_by mutate case_when select
 #' @return Active soil depth
 
-mypkg_computeRootd  <-  function(climdata, rootd0, paramSoilMelt = c( p1 = NA , p2 = NA ), Tm = NA   ){
+mypkg_computeRootd  <-  function(climdata, rootd, paramSoilMelt = c( p1 = NA , p2 = NA ), Tm = NA   ){
 
   ####
   .ezRootd <- 0
@@ -230,16 +230,16 @@ mypkg_computeRootd  <-  function(climdata, rootd0, paramSoilMelt = c( p1 = NA , 
       ### 判断土壤状态
       if ( climdata$TEM[days_i] > 0 & .winter_switch == FALSE  ) {
         climdata$rootd[days_i]  <- min( (  climdata$rootd[days_i-1] + climdata$TEM[days_i] * paramSoilMelt['p1'] * exp( -paramSoilMelt['p2'] * climdata$rootd[days_i - 1])), ##VSM土壤解冻方程
-                                        rootd0  ) ### 土壤开始融化
+                                        rootd  ) ### 土壤开始融化
       }else{ climdata$rootd[days_i]  <-  0 } ### 土壤融化
     }
     if( .ezRootd == 1 ){
       ### 判断土壤状态
       if (.Soil_melt_switch ) {
-        climdata$rootd[days_i]  <- rootd0 ### 土壤融化开关为 TRUE 时土壤开始融化
+        climdata$rootd[days_i]  <- rootd ### 土壤融化开关为 TRUE 时土壤开始融化
       }else{ climdata$rootd[days_i]  <-  0 } ### 土壤融化开关为 FALSE 时土壤开始融化
     } ##
-    if( .ezRootd == 0 ){ climdata$rootd[days_i][ .winter_switch == FALSE ]  <- rootd0 }
+    if( .ezRootd == 0 ){ climdata$rootd[days_i][ .winter_switch == FALSE ]  <- rootd }
 
 
   }
@@ -287,39 +287,39 @@ mypkg_computerSoliMoisture <- function(climdata,
                            paramSoilM = c(M0 = 0.35, dp = 2, alph = 0.0013 , Mmax = 0.6, Mmin = 0.042 ,
                                           mu.th = 1.09, m.th = 4.1 ) ){
 
-  climdata <- Compute_P(climdata)
+  climdata <- mypkg_computePREnSNOW(climdata)
   summaryMicroClim <- logical()
 
   for ( y in unique(climdata$Year) ) {  ## 按年拆分数据循环
-    ydata <- climdata[ climdata$Year == y, ]
+    .ydata <- climdata[ climdata$Year == y, ]
 
-    soilM <- potEv <- gT <- gM <- matrix(NA, nrow(ydata), 1)
-    deltaWaterFlow <- CG <- CR1 <- CR2 <- matrix(0, nrow(ydata), 1)
+    soilM <- potEv <- gT <- gM <- matrix(NA, nrow(.ydata), 1)
+    deltaWaterFlow <- CG <- CR1 <- CR2 <- matrix(0, nrow(.ydata), 1)
 
-    istar <- (ydata$TEM / 5) ^ 1.514 #1.514 = 53/35
-    istar[ydata$TEM < 0] <- NA
+    istar <- (.ydata$TEM / 5) ^ 1.514 #1.514 = 53/35
+    istar[.ydata$TEM < 0] <- NA
     I <- mean(istar,na.rm=T)
     ap <- (6.75e-7) * I ^ 3 - (7.71e-5) * I ^ 2 + (1.79e-2) * I + 0.49
 
-    # attach(ydata$)
+    # attach(.ydata$)
 
     if(paramSoilM['M0'] < 0 ){ paramSoilM['M0'] <- 0.3 } #核对并修正初始值在有效范围
 
-    for (day in 1: nrow(ydata)) {
+    for (day in 1: nrow(.ydata)) {
 
-      if (ydata$rootd[day] > 0) {  ##土壤解冻后在进行计算
+      if (.ydata$rootd[day] > 0) {  ##土壤解冻后在进行计算
 
-        if (ydata$TEM[day] <= 0){Ep <- 0}
-        if (ydata$TEM[day] > 0 && ydata$TEM[day] < 26.5){Ep <- 16 * ydata$Ls[day] * (10 * ydata$TEM[day] / I) ^ ap}
-        if (ydata$TEM[day] >= 26.5){Ep <-  -415.85 + 32.25*ydata$TEM[day] - 0.43* ydata$TEM[day]^2}
+        if (.ydata$TEM[day] <= 0){Ep <- 0}
+        if (.ydata$TEM[day] > 0 && .ydata$TEM[day] < 26.5){Ep <- 16 * .ydata$Ls[day] * (10 * .ydata$TEM[day] / I) ^ ap}
+        if (.ydata$TEM[day] >= 26.5){Ep <-  -415.85 + 32.25*.ydata$TEM[day] - 0.43* .ydata$TEM[day]^2}
         Ep  <-  Ep/30.42
 
         potEv[day]  <-  Ep
 
         #参数初始化：
         #dp = 2.0 # mm of precip per increment 每次计算步长递增降雨量
-        nstep <- floor(ydata$PRE[day]/paramSoilM['dp']) +1 # number of sub-monthly substeps 步进计算长度
-        Pinc <- ydata$PRE[day]/nstep # precip per substep每个子步骤
+        nstep <- floor(.ydata$PRE[day]/paramSoilM['dp']) +1 # number of sub-monthly substeps 步进计算长度
+        Pinc <- .ydata$PRE[day]/nstep # precip per substep每个子步骤
         alphinc <- paramSoilM['alph'] /nstep # runoff rate per substep time interval每个子步时间间隔的径流率
         Epinc <- Ep/nstep # potential evapotrans per substep.每个子步骤潜在的蒸发量。
 
@@ -327,20 +327,20 @@ mypkg_computerSoliMoisture <- function(climdata,
 
         for(istep in 1:nstep){  ## 步长计算湿度
           #计算蒸散：潜在蒸散Ep*(土壤湿度/最大持水量) 注：不同林分使用同样潜在蒸散量是否合适
-          Etrans <- Epinc*sm0*ydata$rootd[day]/(paramSoilM['Mmax']*ydata$rootd[day])
+          Etrans <- Epinc*sm0*.ydata$rootd[day]/(paramSoilM['Mmax']*.ydata$rootd[day])
 
           #计算下渗G：μ*α/(1+μ)*土壤湿度 ##实测排水速度为0.138mm/day
-          G  <-  ( paramSoilM['mu.th']*alphinc/(1+paramSoilM['mu.th'])*sm0*ydata$rootd[day] )# /30
+          G  <-  ( paramSoilM['mu.th']*alphinc/(1+paramSoilM['mu.th'])*sm0*.ydata$rootd[day] )# /30
 
           #计算径流R，地面径流+地下径流
           #地表径流=降雨*（土壤湿度/最大持水量）^m系数
           #地下径流=alpha系数/（1+μ系数）*土壤湿度
-          R1  <-  ( Pinc*(sm0*ydata$rootd[day]/(paramSoilM['Mmax']*ydata$rootd[day]))^paramSoilM['m.th'] )# /30# +
-          R2  <-  ( (alphinc/(1+paramSoilM['mu.th']))*sm0*ydata$rootd[day] ) #/30
+          R1  <-  ( Pinc*(sm0*.ydata$rootd[day]/(paramSoilM['Mmax']*.ydata$rootd[day]))^paramSoilM['m.th'] )# /30# +
+          R2  <-  ( (alphinc/(1+paramSoilM['mu.th']))*sm0*.ydata$rootd[day] ) #/30
 
           # 总模型：土壤湿度=降雨（Pinc）- 蒸散（Etrans）-径流（R）-下渗（G）
           dWdt <- Pinc - Etrans - R1 - R2 - G #总模型
-          sm1 <- sm0 + dWdt/ydata$rootd[day] #根深湿度
+          sm1 <- sm0 + dWdt/.ydata$rootd[day] #根深湿度
           ##
           deltaWaterFlow[day]  <-  deltaWaterFlow[day] + dWdt
           CG[day]  <-  CG[day] + G   ##
@@ -367,7 +367,7 @@ mypkg_computerSoliMoisture <- function(climdata,
     } ## 年内
     microclim <- data.frame(soilM, potEv ,CG,CR1,CR2,deltaWaterFlow   )  ## ,gT,gM
     summaryMicroClim <- rbind(summaryMicroClim,microclim)
-    # detach(ydata)
+    # detach(.ydata)
   }  ##  年循环 out
   climdata <- cbind(climdata,summaryMicroClim) #|> select(c("Year", "Month","Day","DOY","gE","gT","gM","soilM","TEM","Ls","dailyPrec"))
   return(climdata)
