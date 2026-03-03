@@ -4,7 +4,7 @@ Version: 1.1.0-20250301
 Authors@R: 
     c(person(given ="Binqing", 
              family = "Zhao",
-             role = c("aut", "cre"),  
+             role = c("aut", "cre", "ths"),  
              email = "binqing_zhao@163.com") ,
       person(given ="Xiaochun", 
              family = "Wang",
